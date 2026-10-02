@@ -60,7 +60,9 @@ export async function faultcheck(root,options={}) {
     const loaded=await loadConfig(root,options.configPath);
     const before=await snapshot(root,loaded);
     const startedAt=new Date().toISOString();
-    const temporary=await mkdtemp(path.join(os.tmpdir(),'donelatch-'));
+    // Hosted Windows runners may expose TEMP through an 8.3 alias (RUNNER~1).
+    // Derive every child path from its canonical parent before containment checks.
+    const temporary=await realpath(await mkdtemp(path.join(os.tmpdir(),'donelatch-')));
     const template=path.join(temporary,'template');
     const mutations=[];
     let error=null,status='passed';
@@ -103,7 +105,7 @@ export async function faultcheck(root,options={}) {
       // Only paths within this exact mkdtemp directory are removed; never project paths.
       await discardOwnedTemp(temporary,template).catch(()=>{});
       for(let i=0;i<loaded.config.faults.length;i++) await discardOwnedTemp(temporary,path.join(temporary,`case-${i}`)).catch(()=>{});
-      const tempBase=path.resolve(os.tmpdir());
+      const tempBase=await realpath(os.tmpdir());
       if(inside(tempBase,path.resolve(temporary))&&path.basename(temporary).startsWith('donelatch-')) await rm(temporary,{recursive:true,force:true}).catch(()=>{});
     }
     const after=await snapshot(root,await loadConfig(root,options.configPath));

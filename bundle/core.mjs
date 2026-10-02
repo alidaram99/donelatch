@@ -7727,7 +7727,7 @@ async function faultcheck(root, options = {}) {
     const loaded = await loadConfig(root, options.configPath);
     const before = await snapshot(root, loaded);
     const startedAt = (/* @__PURE__ */ new Date()).toISOString();
-    const temporary = await mkdtemp(path3.join(os.tmpdir(), "donelatch-"));
+    const temporary = await realpath2(await mkdtemp(path3.join(os.tmpdir(), "donelatch-")));
     const template = path3.join(temporary, "template");
     const mutations = [];
     let error = null, status = "passed";
@@ -7779,7 +7779,7 @@ ${r.stderr}`.includes(loaded.config.checks.find((c) => c.id === r.id).failureMar
       });
       for (let i = 0; i < loaded.config.faults.length; i++) await discardOwnedTemp(temporary, path3.join(temporary, `case-${i}`)).catch(() => {
       });
-      const tempBase = path3.resolve(os.tmpdir());
+      const tempBase = await realpath2(os.tmpdir());
       if (inside(tempBase, path3.resolve(temporary)) && path3.basename(temporary).startsWith("donelatch-")) await rm(temporary, { recursive: true, force: true }).catch(() => {
       });
     }

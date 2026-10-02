@@ -16,7 +16,7 @@ Node.js **24.17.0**, Windows, ESM.
 | Check | Observed result |
 | --- | --- |
 | `npm run build` | Both self-contained runtime bundles generated successfully. |
-| `npm test` | **57 passed, 0 failed, 0 skipped** (39 behavioral tests, 18 adapter tests). |
+| `npm test` | **58 passed, 0 failed, 0 skipped** (40 behavioral tests, 18 adapter tests). |
 | `npm run demo` | Weak test refused; strong persistence assertion accepted; later edit refused. |
 | Dependency-free CLI smoke | Copied only `bin/` and `bundle/`, with no source dependencies or npm install; `faultcheck`, `run`, and `verify-done` passed for the strong fixture. |
 | Actual hook subprocesses | All four adapters emitted exactly `{}` for real current receipts, returned vendor-specific correction on a later edit, and stayed UNVERIFIED after the retry cap. |
@@ -37,7 +37,7 @@ The acceptance contract is persisted settings. A return-value assertion misses a
 
 ## What the tests actually cover
 
-Freshness: content changes even when modification time is restored exactly, additions/deletions/renames/touches, configuration and Git HEAD changes, edits during a root check or copied baseline, latest failed-run supersession, latest weak-faultcheck supersession, in-flight operation refusal, and ignored-prefix boundaries.
+Freshness: content changes even when modification time is restored exactly, additions/deletions/renames/touches, configuration and Git HEAD changes, edits during a root check or copied baseline, latest failed-run supersession, latest weak-faultcheck supersession, in-flight operation refusal, and ignored-prefix boundaries. A noncanonical OS temporary-directory alias is tested through successful fault checking and cleanup.
 
 Fault validity: healthy marker-free baseline, semantic persisted-output assertion, independent mutants, literal dollar-metacharacter replacement, unique literal matching, survived faults, parser/setup errors, timeouts, and undeclared failures. Windows protected-path aliases and case-insensitive excluded paths are tested.
 

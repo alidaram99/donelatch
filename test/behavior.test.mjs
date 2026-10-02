@@ -68,8 +68,10 @@ async function writeConfig(root, config) {
 }
 
 async function accept(root) {
-  assert.equal((await faultcheck(root)).status, 'passed');
-  assert.equal((await runChecks(root)).status, 'passed');
+  const fault = await faultcheck(root);
+  assert.equal(fault.status, 'passed', `Faultcheck receipt:\n${JSON.stringify(fault, null, 2)}`);
+  const run = await runChecks(root);
+  assert.equal(run.status, 'passed', `Acceptance run receipt:\n${JSON.stringify(run, null, 2)}`);
   const gate = await verifyDone(root);
   assert.equal(gate.ok, true, gate.reasons.join('\n'));
 }
@@ -99,8 +101,8 @@ test('passing a weak test cannot establish done when its persistence fault survi
   assert.equal((await runChecks(root)).status, 'passed');
   assert.equal((await verifyDone(root)).ok, false, 'A run alone is not acceptance evidence');
   const faults = await faultcheck(root);
-  assert.equal(faults.status, 'weak');
-  assert.equal(faults.mutations[0].status, 'survived');
+  assert.equal(faults.status, 'weak', `Weak-check receipt:\n${JSON.stringify(faults, null, 2)}`);
+  assert.equal(faults.mutations[0].status, 'survived', `Weak-check receipt:\n${JSON.stringify(faults, null, 2)}`);
   assert.equal((await verifyDone(root)).ok, false);
 });
 
@@ -484,4 +486,33 @@ test('done is refused during a running operation and accepted again after its lo
   assert.ok(blocked.reasons.some((reason) => /operation|running|progress/i.test(reason)));
   await rm(lock);
   assert.equal((await verifyDone(root)).ok, true);
+});
+
+test('faultcheck works when the operating-system temp directory has a noncanonical alias', async (t) => {
+  const { root } = await fixture(t);
+  const container = await mkdtemp(join(tmpdir(), 'donelatch-temp-alias-'));
+  t.after(() => rm(container, { recursive: true, force: true }));
+  const actual = join(container, 'actual-temp');
+  const alias = join(container, 'aliased-temp');
+  await mkdir(actual);
+  try {
+    await symlink(actual, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  } catch (error) {
+    if (['EPERM', 'EACCES', 'ENOTSUP'].includes(error.code)) return t.skip(`Host cannot create a temp alias: ${error.code}`);
+    throw error;
+  }
+  const variables = process.platform === 'win32' ? ['TEMP', 'TMP'] : ['TMPDIR'];
+  const previous = Object.fromEntries(variables.map((name) => [name, process.env[name]]));
+  try {
+    for (const name of variables) process.env[name] = alias;
+    assert.equal(tmpdir(), alias, 'Fixture must use the noncanonical temp path');
+    await accept(root);
+    const { readdir } = await import('node:fs/promises');
+    assert.deepEqual(await readdir(actual), [], 'Owned temporary directories should be cleaned through their canonical paths');
+  } finally {
+    for (const name of variables) {
+      if (previous[name] === undefined) delete process.env[name];
+      else process.env[name] = previous[name];
+    }
+  }
 });
