@@ -1,0 +1,16 @@
+{
+  "description": "DoneLatch completion guardrail; review and trust this hook in /hooks before relying on it.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"import(require('node:url').pathToFileURL(require('node:path').join(process.env.PLUGIN_ROOT,'hooks','stop.mjs')).href).then(m=>m.runHook('codex'))\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

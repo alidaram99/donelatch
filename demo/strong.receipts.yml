@@ -1,0 +1,15 @@
+version: 1
+checks:
+  - id: persistence
+    command: node
+    args: [checks/strong.mjs]
+    timeoutMs: 10000
+    failureExitCodes: [1]
+    failureMarker: ASSERT_PERSISTENCE
+faults:
+  - id: skipped-persisted-write
+    file: src/store.mjs
+    find: 'writeFileSync(target, JSON.stringify(settings));'
+    replace: '// intentionally remove the persisted write'
+    checkIds: [persistence]
+exclude: [runtime]

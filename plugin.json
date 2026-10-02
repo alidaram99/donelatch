@@ -1,0 +1,11 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "donelatch",
+  "version": "0.1.0",
+  "description": "Fresh acceptance evidence and deliberate fault checks before a coding agent claims done.",
+  "extensions": {
+    "com.openai": {
+      "hooks": "./hooks/codex.json"
+    }
+  }
+}

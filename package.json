@@ -1,0 +1,16 @@
+{
+  "name": "donelatch",
+  "version": "0.1.0",
+  "description": "Fresh acceptance evidence and fault-sensitive completion checks for coding agents.",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "bin": { "donelatch": "./bin/receipts.mjs", "receipts": "./bin/receipts.mjs" },
+  "exports": "./src/index.mjs",
+  "scripts": { "test": "node --test test/*.test.mjs", "demo": "node scripts/demo.mjs", "build": "node scripts/build.mjs" },
+  "dependencies": { "yaml": "^2.8.1" },
+  "devDependencies": { "esbuild": "^0.25.0" },
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/alidaram99/donelatch.git" },
+  "homepage": "https://alidaram99.github.io/donelatch/",
+  "keywords": ["coding-agents", "acceptance-testing", "mutation-testing", "claude-code", "codex", "gemini-cli", "cursor", "receipts", "agent-plugin", "verification"]
+}

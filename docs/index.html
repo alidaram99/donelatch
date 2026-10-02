@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DoneLatch — fresh acceptance evidence for coding agents</title>
+  <meta name="description" content="Free local CLI and plugin for Claude Code, Codex, Gemini and Cursor. Check fresh acceptance results and prove a configured fault is detected before accepting done.">
+  <meta name="robots" content="index,follow,max-snippet:-1">
+  <link rel="canonical" href="https://alidaram99.github.io/donelatch/">
+  <link rel="icon" type="image/svg+xml" href="icon.svg">
+  <link rel="stylesheet" href="style.css">
+  <meta property="og:title" content="DoneLatch — no accepted done without current evidence">
+  <meta property="og:description" content="Free local completion-evidence CLI. Fresh checks, explicit fault sensitivity, signed local receipts. For coding-agent workflows.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://alidaram99.github.io/donelatch/">
+  <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"SoftwareApplication","name":"DoneLatch","url":"https://alidaram99.github.io/donelatch/","softwareVersion":"0.1.0","applicationCategory":"DeveloperApplication","operatingSystem":"Windows, Linux, macOS with Node.js 24+","description":"Local completion-evidence CLI and hook plugin for coding agents; requires current acceptance and configured fault-sensitivity receipts.","license":"https://opensource.org/license/mit","codeRepository":"https://github.com/alidaram99/donelatch","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How do I check a coding agent's done claim?","acceptedAnswer":{"@type":"Answer","text":"Configure an acceptance assertion and meaningful fault in receipts.yml, run DoneLatch run and faultcheck after the last edit, then use verify-done. It accepts only matching current evidence."}},{"@type":"Question","name":"Does DoneLatch hard-block Claude Code, Codex or Cursor?","acceptedAnswer":{"@type":"Answer","text":"Hooks are cooperative guardrails, with at most one corrective turn and an UNVERIFIED warning afterward. Hosts can still stop. Use verify-done in a separately controlled acceptance step when its nonzero exit must be enforced."}},{"@type":"Question","name":"Does DoneLatch upload code or charge per check?","acceptedAnswer":{"@type":"Answer","text":"Version 0.1.0 is local, MIT-licensed and free, with no telemetry or hosted service. Configured project commands can independently use the network."}},{"@type":"Question","name":"Can green tests still miss bugs?","acceptedAnswer":{"@type":"Answer","text":"Yes. The included demo removes a persisted write: a weak return-value check stays green while a fresh reader catches the defect. A configured negative control covers that particular outcome, not all possible defects."}}]}</script>
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="wrap nav"><a class="brand" href="./"><img src="icon.svg" width="32" height="32" alt="">DoneLatch</a><nav aria-label="Main"><a href="#how">How it works</a><a href="#install">Install</a><a href="https://github.com/alidaram99/donelatch">GitHub ↗</a></nav></header>
+  <main id="main" class="wrap">
+    <section class="hero">
+      <p class="eyebrow">FREE · LOCAL · MIT · FOR CODING AGENTS</p>
+      <h1>“Done” needs a receipt.</h1>
+      <p class="lead">DoneLatch checks a coding agent’s completion claim against fresh acceptance results and tests that detect a configured fault.</p>
+      <p>Did the check run after the last edit? Would it actually catch the missing behavior? Keep the answer in a local receipt.</p>
+      <div class="actions"><a class="button" href="#install">Try the real demo</a><a class="button secondary" href="https://github.com/alidaram99/donelatch/blob/main/docs/AGENT-INSTALL.md">Install for your agent</a></div>
+      <p class="small">Claude Code · Codex · Gemini CLI · Cursor. Node.js 24+. No AI subscription or API key required.</p>
+    </section>
+    <section id="how">
+      <h2>Check the result. Then check the check.</h2>
+      <div class="grid">
+        <article><span class="number">01</span><h3>A fresh baseline</h3><p>Execute the configured acceptance checks and bind the result to watched files, configuration, and Git HEAD.</p></article>
+        <article><span class="number">02</span><h3>A deliberate fault</h3><p>Skip a persisted write or flip a boundary in a temporary copy. Require the declared assertion to detect it.</p></article>
+        <article><span class="number">03</span><h3>A current receipt</h3><p>Read locally signed evidence. An edit, a later failure, or a weak negative control means completion is refused.</p></article>
+      </div>
+      <aside class="demo"><p class="eyebrow">ACTUAL INCLUDED PERSISTENCE DEMO</p><pre><code><span class="no">WEAK CHECK:</span>  return value passes; removed write survives → REFUSED
+<span class="yes">STRONG CHECK:</span> fresh reader detects removed write         → ACCEPTED
+<span class="no">AFTER EDIT:</span>  earlier receipts are stale                  → REFUSED</code></pre><p class="small">One outcome contract. This does not prove every requirement or every defect.</p></aside>
+    </section>
+    <section id="install">
+      <h2>Run the demo first</h2>
+      <p>Clone the reviewed release. The demo runs in a disposable copy and leaves its shipped source unchanged.</p>
+      <pre><code>git clone --branch v0.1.0 --depth 1 https://github.com/alidaram99/donelatch.git
+cd donelatch
+npm ci
+npm run demo</code></pre>
+      <h3>Use it in your project</h3><p>Initialize and edit the template to define your actual result and a meaningful negative control.</p>
+      <pre><code>npx --yes github:alidaram99/donelatch#v0.1.0 init
+# Review and configure receipts.yml before running commands.
+npx --yes github:alidaram99/donelatch#v0.1.0 run
+npx --yes github:alidaram99/donelatch#v0.1.0 faultcheck
+npx --yes github:alidaram99/donelatch#v0.1.0 verify-done</code></pre>
+      <p><a href="https://github.com/alidaram99/donelatch#use-it-with-your-agent">Claude and Codex plugin commands</a> · <a href="https://github.com/alidaram99/donelatch/blob/main/docs/AGENT-INSTALL.md">All four hook configurations</a> · <a href="https://github.com/alidaram99/donelatch/releases/tag/v0.1.0">Release v0.1.0</a></p>
+    </section>
+    <section class="boundary"><h2>Know what the receipt means</h2><p>Hooks request correction; they are cooperative guardrails. A host can stop an <strong>UNVERIFIED</strong> turn after the retry cap. The CLI still refuses acceptance. Temporary copies are not a sandbox, and a signature from your own local key is not independent review.</p><p>The guarantee covers your configured watched scope and declared faults. It does not cover excluded files, malicious same-user processes, or every user requirement. <a href="https://github.com/alidaram99/donelatch/blob/main/SECURITY.md">Read the security boundaries.</a></p></section>
+    <section><h2>Why this problem matters</h2><p>In Stack Overflow’s 2025 developer survey, 66% of respondents to the AI-frustrations question reported almost-correct solutions. That motivates verification; it does not establish a failure rate for this tool or any individual agent. <a href="https://survey.stackoverflow.co/2025/ai#ai-tool-frustrations">Primary survey source.</a></p><p>DoneLatch complements <a href="https://stryker-mutator.io/docs/">Stryker’s broader mutation analysis</a>, <a href="https://www.checklyhq.com/product/monitoring-as-code/">Checkly’s production monitoring</a>, and ordinary CI. Its focus is a small outcome contract connected to current completion evidence.</p></section>
+    <section id="faq"><h2>Common questions</h2>
+      <details open><summary>How do I check a coding agent’s done claim?</summary><p>Configure an acceptance assertion and meaningful fault in <code>receipts.yml</code>, run DoneLatch <code>run</code> and <code>faultcheck</code> after the last edit, then use <code>verify-done</code>. It accepts only matching current evidence.</p></details>
+      <details><summary>Does DoneLatch hard-block Claude Code, Codex or Cursor?</summary><p>Hooks are cooperative guardrails, with at most one corrective turn and an UNVERIFIED warning afterward. Hosts can still stop. Use <code>verify-done</code> in a separately controlled acceptance step when its nonzero exit must be enforced.</p></details>
+      <details><summary>Does DoneLatch upload code or charge per check?</summary><p>Version 0.1.0 is local, MIT-licensed and free, with no telemetry or hosted service. Configured project commands can independently use the network.</p></details>
+      <details><summary>Can green tests still miss bugs?</summary><p>Yes. The included demo removes a persisted write: a weak return-value check stays green while a fresh reader catches the defect. A configured negative control covers that particular outcome, not all possible defects.</p></details>
+    </section>
+  </main>
+  <footer class="wrap"><p>DoneLatch v0.1.0 · Drop-in APIs · <a href="https://github.com/alidaram99/donelatch">Open source</a> · <a href="https://github.com/alidaram99/donelatch/blob/main/docs/VERIFY.md">Verification</a> · <a href="llms.txt">For AI readers</a></p><p class="small">Optional hosted analysis is a future plan. No paid service or revenue claim is present today.</p></footer>
+</body>
+</html>

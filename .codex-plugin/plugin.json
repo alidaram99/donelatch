@@ -1,0 +1,7 @@
+{
+  "name": "donelatch",
+  "version": "0.1.0",
+  "description": "Fresh acceptance and fault-check receipts for coding agents.",
+  "skills": "./skills/",
+  "hooks": "./hooks/codex.json"
+}

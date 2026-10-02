@@ -1,0 +1,17 @@
+{
+  "description": "DoneLatch requests fresh acceptance and fault-check receipts before completion, with at most one continuation.",
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node",
+            "args": ["${CLAUDE_PLUGIN_ROOT}/hooks/stop.mjs", "claude"],
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

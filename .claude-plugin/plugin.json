@@ -1,0 +1,10 @@
+{
+  "name": "donelatch",
+  "version": "0.1.0",
+  "description": "Fresh acceptance evidence and deliberate fault checks before a coding agent claims done.",
+  "author": { "name": "Drop-in APIs", "url": "https://github.com/alidaram99" },
+  "homepage": "https://alidaram99.github.io/donelatch/",
+  "repository": "https://github.com/alidaram99/donelatch",
+  "license": "MIT",
+  "keywords": ["acceptance-tests", "agent-verification", "receipts", "mutation-testing"]
+}

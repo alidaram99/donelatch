@@ -1,0 +1,12 @@
+{
+  "name": "donelatch-marketplace",
+  "interface": { "displayName": "DoneLatch" },
+  "plugins": [
+    {
+      "name": "donelatch",
+      "source": { "source": "local", "path": "./" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity"
+    }
+  ]
+}
