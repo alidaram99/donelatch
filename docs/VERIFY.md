@@ -47,7 +47,21 @@ Adapter behavior: official vendor response semantics, JSON-only stdout, visible 
 
 ## Publication checks
 
-The public repository, release, website, and public CI are checked after pushing the standalone product. The final checked URLs and CI conclusions are appended below after deployment; local test results above do not imply deployment success.
+| Publication check | Observed result |
+| --- | --- |
+| [Public repository](https://github.com/alidaram99/donelatch) | PUBLIC, main branch, homepage saved, **15 discovery topics** saved. |
+| [Windows + Linux CI](https://github.com/alidaram99/donelatch/actions/runs/37066177584) | Both jobs succeeded: **58/58 passed, 0 failed, 0 skipped on each OS**. Bundle/source equality and the demo passed on both. Tested code revision `cc7436413ffef02d14d81c76fa2fc807976e6e07`. |
+| [Website deployment](https://github.com/alidaram99/donelatch/actions/runs/37066177558) | SUCCEEDED. |
+| [Live homepage](https://alidaram99.github.io/donelatch/) | HTTP 200; canonical URL present; SoftwareApplication and FAQPage JSON-LD parsed successfully. |
+| Discovery/static assets | `style.css`, `icon.svg`, `robots.txt`, `sitemap.xml`, and `llms.txt` each returned HTTP 200 with the expected content type. |
+| GitHub-based npx install | Invoking the actual public repository with `--version` reported `0.1.0`. Release installation uses `github:alidaram99/donelatch#v0.1.0`. |
+| Release distribution | [GitHub v0.1.0 release](https://github.com/alidaram99/donelatch/releases/tag/v0.1.0); source archives and pinned GitHub installation. No npm-registry publication. |
+
+The first hosted Windows CI attempt exposed a noncanonical OS temporary-directory alias: the original containment comparison rejected its own safe temporary copy. Canonicalizing the temporary parent before deriving child paths fixed this; a junction/symlink-alias regression also checks cleanup. Both hosted OS runs then passed without relaxed acceptance conditions. The initial website attempt preceded GitHub Pages setup; it succeeded after Pages was enabled.
+
+The portfolio-wide `node scripts/test-all.mjs` was also attempted locally. Its Node-based Actor, scripts, and agency suites passed, but the existing media-url-transcriber and whisper-compat suites could not run because Python is not installed/on PATH on this laptop. That aggregate failure is separate from this standalone product's passing local and public CI. The aggregation script was not edited.
+
+SEO/AEO/GEO preparation means useful README/FAQ, truthful structured data, canonical URL, crawlable page, sitemap, machine-readable llms.txt, and GitHub topics. Search-engine indexing, rankings, official directory listing, adoption, and paid demand have not been established. No external social posts or messages were sent.
 
 ## Known limits
 
