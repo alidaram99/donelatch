@@ -1,0 +1,6 @@
+{
+  "name": "donelatch",
+  "version": "0.1.1",
+  "description": "Refuse completion acceptance without fresh checks and configured fault-sensitivity evidence. Free local CLI and bounded AfterAgent guardrail.",
+  "contextFileName": "GEMINI.md"
+}

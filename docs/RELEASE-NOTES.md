@@ -1,6 +1,14 @@
-# DoneLatch v0.1.0
+# DoneLatch v0.1.1
 
-Free local completion-evidence CLI and coding-agent hook plugin.
+Discovery and Gemini CLI extension release. The v0.1.0 completion-evidence engine is unchanged.
+
+- Root `gemini-extension.json`, `GEMINI.md`, and a native `AfterAgent` hook; install from the tagged public repository.
+- Shared native hook file preserves Claude's `Stop` hook. Each host skips the other host's event with an unknown-event warning. Do not also install the manual Gemini hook.
+- Direct-answer website copy, visible FAQ with matching JSON-LD, search/AI crawler directives, sitemap, and AI-reader summary.
+- Links to the team's other tools; a scoped IndexNow key and post-deployment notification.
+- Regression coverage invokes Gemini's actual shipped command, including the quoted extension path, on real passing and stale receipts.
+
+Included from v0.1.0:
 
 - `init`, `run`, `faultcheck`, and `verify-done`; `receipts` and `donelatch` command aliases.
 - Current watched-file/configuration/Git binding, latest-failure supersession, Ed25519 receipt signatures and hash chaining.

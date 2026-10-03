@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { initProject, runChecks, faultcheck, verifyDone } from '../bundle/core.mjs';
 
-const help=`DoneLatch v0.1.0 — fresh acceptance evidence and fault-sensitive completion checks.
+const help=`DoneLatch v0.1.1 — fresh acceptance evidence and fault-sensitive completion checks.
 Usage: donelatch <init|run|faultcheck|verify-done> [--root PATH] [--config PATH] [--json]
 Alias: receipts
 Configure trusted executable+args checks in receipts.yml, and explicit literal faults.
@@ -10,7 +10,7 @@ This is a cooperative guardrail, not a sandbox or an independent security attest
 try {
   const args=process.argv.slice(2);
   if(args.length===0||args[0]==='--help'||args[0]==='-h') {console.log(help);process.exit(0);}
-  if(args[0]==='--version') {console.log('0.1.0');process.exit(0);}
+  if(args[0]==='--version') {console.log('0.1.1');process.exit(0);}
   const command=args.shift();
   const actions={init:initProject,run:runChecks,faultcheck,'verify-done':verifyDone};
   if(!Object.hasOwn(actions,command)) throw new Error(`Unknown command: ${command}`);

@@ -1,6 +1,6 @@
 {
   "name": "donelatch",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Fresh acceptance evidence and fault-sensitive completion checks for coding agents.",
   "type": "module",
   "engines": { "node": ">=24" },

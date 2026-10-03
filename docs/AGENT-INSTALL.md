@@ -7,7 +7,7 @@ DoneLatch asks a coding agent to provide current acceptance and fault-check rece
 Use Node.js 24 or newer. Clone a trusted release outside the project you want to verify:
 
 ```sh
-git clone --branch v0.1.0 --depth 1 https://github.com/alidaram99/donelatch.git
+git clone --branch v0.1.1 --depth 1 https://github.com/alidaram99/donelatch.git
 cd donelatch
 ```
 
@@ -72,7 +72,7 @@ Stop receives `cwd` and `stop_hook_active`. A failing verifier returns `decision
 DoneLatch includes a portable root `plugin.json`, a compatibility `.codex-plugin/plugin.json`, a skill, and a Codex marketplace catalog. Add the marketplace:
 
 ```sh
-codex plugin marketplace add alidaram99/donelatch --ref v0.1.0
+codex plugin marketplace add alidaram99/donelatch --ref v0.1.1
 codex plugin marketplace list
 ```
 
@@ -100,7 +100,18 @@ Codex Stop receives `cwd`, `turn_id`, and `stop_hook_active`; `decision: "block"
 
 ## Gemini CLI
 
-Merge this into the target project's `.gemini/settings.json`:
+Install the tagged extension, review the hook permissions, then restart Gemini CLI:
+
+```sh
+gemini extensions install https://github.com/alidaram99/donelatch --ref v0.1.1
+gemini extensions list
+```
+
+The root gemini-extension.json declares the name/version/context. Gemini discovers its AfterAgent handler from hooks/hooks.json; the command quotes the substituted extensionPath so cache paths with spaces work. The bundled CLI/verifier and existing acceptance-receipt skill need no runtime npm install.
+
+The shared hook file also contains Claude's Stop entry. Current Claude validation warns that AfterAgent is an unknown event and ignores it; Gemini's official registry skips the unknown Stop entry with a warning. Each host uses its own event, root variable and timeout units. Use one installation path per host to avoid duplicating a manual and extension hook. References: [extension layout and variable substitution](https://geminicli.com/docs/extensions/reference/), [Gemini event-name filtering](https://github.com/google-gemini/gemini-cli/blob/main/packages/core/src/hooks/hookRegistry.ts), [gallery release requirements](https://geminicli.com/docs/extensions/releasing/).
+
+For manual project-only setup instead of extension installation, merge this into the target project's `.gemini/settings.json`:
 
 ```json
 {
@@ -150,7 +161,7 @@ claude plugin validate .
 claude plugin validate .claude-plugin/plugin.json
 ```
 
-The protocol tests cover vendor-specific retry decisions, a passing result, verifier errors, one-retry caps, project/subdirectory identity, repository boundaries, unconfigured-project notices, and JSON-only stdout. Claude marketplace and manifest validation passed with Claude Code 2.1.282. A live model session was not launched by those validation commands. Codex, Gemini CLI, and Cursor end-to-end hook execution remains unverified until exercised in the user's installed versions.
+The protocol tests cover vendor-specific retry decisions, a passing result, verifier errors, one-retry caps, project/subdirectory identity, repository boundaries, unconfigured-project notices, and JSON-only stdout. The release test invokes Gemini's actual extension command with native path substitution on real fresh and stale receipts. Claude marketplace validation passed with Claude Code 2.1.282; plugin validation passed with the expected warning that AfterAgent is ignored. No live model session was launched by these commands. Full host-controlled hook execution in Claude, Codex, Gemini CLI, and Cursor remains unverified until exercised in the user's installed versions.
 
 ## Acceptance boundaries
 

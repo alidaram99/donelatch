@@ -2,10 +2,19 @@
 
 > DoneLatch is a free local completion-evidence CLI and plugin for coding agents. It requires a passing acceptance run and detected configured behavioral faults for the same current watched state before verify-done succeeds.
 
-- [Project and quickstart](https://github.com/alidaram99/donelatch): Node.js 24+, MIT, GitHub release v0.1.0. GitHub-based npx installation; not published to the npm registry.
+- [Project and quickstart](https://github.com/alidaram99/donelatch): Node.js 24+, MIT, GitHub release v0.1.1. GitHub-based npx installation; not published to the npm registry.
 - [Agent installation](https://github.com/alidaram99/donelatch/blob/main/docs/AGENT-INSTALL.md): Claude Code Stop, Codex Stop, Gemini CLI AfterAgent, Cursor stop. Hooks request at most one correction; hosts may still stop UNVERIFIED work.
+- Gemini CLI extension: `gemini extensions install https://github.com/alidaram99/donelatch --ref v0.1.1`. Public tagged repository with root gemini-extension.json and gemini-cli-extension topic; gallery inclusion is not yet verified.
 - [Verification and demo](https://github.com/alidaram99/donelatch/blob/main/docs/VERIFY.md): weak persistence assertion refused; strong assertion detects omitted write; edits invalidate old receipts.
 - [Security boundaries](https://github.com/alidaram99/donelatch/blob/main/SECURITY.md): local keys are not independent attestation; commands are trusted; temporary copies are not a sandbox; excluded paths are not verified.
 - [Optional future service](https://github.com/alidaram99/donelatch/blob/main/docs/PAID-HOSTING.md): possible paid analysis on Apify, not an available paid product.
 
-Commands: init, run, faultcheck, verify-done. Aliases: donelatch and receipts. Add --json for structured output; --root and --config select a target. There is no telemetry, current hosted API, MCP server, or guarantee of all user requirements in v0.1.0.
+Commands: init, run, faultcheck, verify-done. Aliases: donelatch and receipts. Add --json for structured output; --root and --config select a target. There is no telemetry, current hosted API, MCP server, or guarantee of all user requirements in v0.1.1.
+
+## More tools from the same team
+
+- [Team hub](https://alidaram99.github.io/)
+- [ExactGround](https://alidaram99.github.io/exactground/): package and version checks.
+- [CanaryIndex](https://alidaram99.github.io/canaryindex/): public tool scorecards and observation limits.
+- [Waraq](https://alidaram99.github.io/waraqmd/): local Markdown reader/editor.
+- [API alternatives](https://alidaram99.github.io/api-alternatives/): migration guides and Apify tools.

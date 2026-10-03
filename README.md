@@ -1,4 +1,4 @@
-DoneLatch checks a coding agent's completion claim against fresh acceptance results and tests that detect a configured fault.
+DoneLatch refuses acceptance of a coding agent's "done" until fresh checks pass and detect a configured behavioral fault.
 
 # DoneLatch
 
@@ -6,7 +6,7 @@ DoneLatch checks a coding agent's completion claim against fresh acceptance resu
 
 DoneLatch is a free, MIT-licensed local CLI and completion-hook plugin for Claude Code, Codex, Gemini CLI, and Cursor. It binds acceptance results to the current watched files, Git commit, and check configuration, then uses a deliberate behavioral fault as a negative control. It leaves a locally signed receipt instead of trusting a narrative saying the work is done.
 
-[Website](https://alidaram99.github.io/donelatch/) · [Install for your agent](docs/AGENT-INSTALL.md) · [Verification record](docs/VERIFY.md) · [Security boundaries](SECURITY.md) · [v0.1.0](https://github.com/alidaram99/donelatch/releases/tag/v0.1.0)
+[Website](https://alidaram99.github.io/donelatch/) · [Install for your agent](docs/AGENT-INSTALL.md) · [Verification record](docs/VERIFY.md) · [Security boundaries](SECURITY.md) · [v0.1.1](https://github.com/alidaram99/donelatch/releases/tag/v0.1.1)
 
 ## Why check the checks?
 
@@ -23,11 +23,11 @@ Requires **Node.js 24+** and Git for GitHub-based `npx` installation. No API key
 In your target project:
 
 ```sh
-npx --yes github:alidaram99/donelatch#v0.1.0 init
+npx --yes github:alidaram99/donelatch#v0.1.1 init
 # Edit receipts.yml: use a trusted acceptance command and one meaningful fault.
-npx --yes github:alidaram99/donelatch#v0.1.0 run
-npx --yes github:alidaram99/donelatch#v0.1.0 faultcheck
-npx --yes github:alidaram99/donelatch#v0.1.0 verify-done
+npx --yes github:alidaram99/donelatch#v0.1.1 run
+npx --yes github:alidaram99/donelatch#v0.1.1 faultcheck
+npx --yes github:alidaram99/donelatch#v0.1.1 verify-done
 ```
 
 `init` writes a template. It does not infer the right requirement or provide instant proof: you must replace the placeholder check and fault. The command aliases are `donelatch` and `receipts`. This release is distributed on GitHub; it is not a published npm-registry package.
@@ -35,7 +35,7 @@ npx --yes github:alidaram99/donelatch#v0.1.0 verify-done
 Try the complete example with no project setup:
 
 ```sh
-git clone --branch v0.1.0 --depth 1 https://github.com/alidaram99/donelatch.git
+git clone --branch v0.1.1 --depth 1 https://github.com/alidaram99/donelatch.git
 cd donelatch
 npm ci
 npm run demo
@@ -110,10 +110,18 @@ claude plugin install donelatch@donelatch-marketplace
 Codex marketplace discovery:
 
 ```sh
-codex plugin marketplace add alidaram99/donelatch --ref v0.1.0
+codex plugin marketplace add alidaram99/donelatch --ref v0.1.1
 ```
 
-Then install in the supported Plugins Directory and inspect/trust the hook in `/hooks`. Adding a marketplace does not install or trust the plugin. Gemini `AfterAgent` and Cursor `stop` use the reviewed local adapter. All four exact configurations and primary-source references are in [agent installation](docs/AGENT-INSTALL.md).
+Then install in the supported Plugins Directory and inspect/trust the hook in `/hooks`. Adding a marketplace does not install or trust the plugin.
+
+Gemini CLI extension installation:
+
+```sh
+gemini extensions install https://github.com/alidaram99/donelatch --ref v0.1.1
+```
+
+The extension bundles the CLI, acceptance-receipt skill, context and bounded `AfterAgent` hook. The repository satisfies the documented gallery discovery prerequisites; it is not a claim of current gallery inclusion. Cursor `stop` and manual Gemini installation can still use the reviewed local adapter. All four exact configurations and primary-source references are in [agent installation](docs/AGENT-INSTALL.md).
 
 The release includes self-contained CLI and verifier bundles. A cloned plugin cache can run them with Node alone, without npm installation or a network call at every stop.
 
@@ -150,7 +158,7 @@ It is a deterministic local completion-evidence tool. It does not require an LLM
 
 ### Does DoneLatch upload my repository or charge per check?
 
-No. Version 0.1.0 is local, free, and has no telemetry or hosted service. Your own configured commands may use the network. Optional hosted analysis is a documented future plan, not an available paid product.
+No. Version 0.1.1 is local, free, and has no telemetry or hosted service. Your own configured commands may use the network. Optional hosted analysis is a documented future plan, not an available paid product.
 
 ### Does this verify every user requirement or prevent malicious agents?
 

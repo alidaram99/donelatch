@@ -12,6 +12,18 @@
           }
         ]
       }
+    ],
+    "AfterAgent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "name": "donelatch-acceptance",
+            "command": "node \"${extensionPath}/hooks/stop.mjs\" gemini",
+            "timeout": 30000
+          }
+        ]
+      }
     ]
   }
 }

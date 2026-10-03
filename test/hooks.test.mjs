@@ -1,13 +1,25 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { hookResponse, runHook, resolveProjectRoot } from '../hooks/stop.mjs';
-import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const invalid = { ok: false, reasons: ['No receipt after last edit.'] };
+
+test('Gemini extension ships its context and native hook alongside the Claude hook', async () => {
+  const manifest = JSON.parse(await readFile(new URL('../gemini-extension.json', import.meta.url), 'utf8'));
+  const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+  assert.equal(manifest.name, 'donelatch');
+  assert.equal(manifest.version, pkg.version);
+  assert.match(await readFile(new URL(`../${manifest.contextFileName}`, import.meta.url), 'utf8'), /verify-done/);
+  const config = JSON.parse(await readFile(new URL('../hooks/hooks.json', import.meta.url), 'utf8'));
+  assert.equal(config.hooks.Stop[0].hooks[0].args[1], 'claude');
+  assert.equal(config.hooks.AfterAgent[0].hooks[0].timeout, 30000);
+  assert.match(config.hooks.AfterAgent[0].hooks[0].command, /\$\{extensionPath\}\/hooks\/stop\.mjs" gemini$/);
+});
 
 for (const vendor of ['claude', 'codex', 'gemini', 'cursor']) {
   test(`${vendor}: accepts only the verifier's true result`, () => {
@@ -177,14 +189,21 @@ if (value !== 'ok') { console.error('ASSERT_LITERAL: wrong value'); process.exit
   assert.equal((await faultcheck(root)).status, 'passed');
   assert.equal((await verifyDone(root)).ok, true);
   const entrypoint = fileURLToPath(new URL('../hooks/stop.mjs', import.meta.url));
+  const extensionRoot = fileURLToPath(new URL('..', import.meta.url)).replaceAll('\\', '/').replace(/\/$/, '');
+  const nativeHooks = JSON.parse(await readFile(new URL('../hooks/hooks.json', import.meta.url), 'utf8'));
+  const geminiCommand = nativeHooks.hooks.AfterAgent[0].hooks[0].command.replaceAll('${extensionPath}', extensionRoot);
   function invoke(vendor, retry = false) {
-    const result = spawnSync(process.execPath, [entrypoint, vendor], {
+    const options = {
       cwd: root,
       input: JSON.stringify({ cwd: root, status: 'completed', loop_count: retry ? 1 : 0, stop_hook_active: retry }),
       encoding: 'utf8',
       timeout: 30000,
       env: { ...process.env, DONELATCH_PROJECT_ROOT: root }
-    });
+    };
+    // Exercise Gemini's shipped native command, including its quoted extension path.
+    const result = vendor === 'gemini'
+      ? spawnSync(geminiCommand, { ...options, shell: true })
+      : spawnSync(process.execPath, [entrypoint, vendor], options);
     assert.equal(result.status, 0, result.stderr);
     assert.equal(result.stdout.trim().split('\n').length, 1);
     return { json: JSON.parse(result.stdout), stderr: result.stderr };
