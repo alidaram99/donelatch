@@ -1,6 +1,6 @@
 # Optional hosted analysis: future plan
 
-Version 0.1.1 has no paid service and makes no revenue claim. The CLI, local fault checks, hooks, and local receipts are free under MIT. A payment page, subscription, or current paid Actor must not be inferred from this document.
+Version 0.1.2 has no paid service and makes no revenue claim. The CLI, local fault checks, hooks, and local receipts are free under MIT. A payment page, subscription, or current paid Actor must not be inferred from this document.
 
 A later Apify pay-per-event service could analyze an explicitly uploaded, redacted contract/evidence bundle and suggest a small set of stronger negative controls. It must return a concrete finding tied to the supplied evidence, not a paid badge promising that arbitrary work is correct.
 

@@ -9,13 +9,23 @@ const cliPath = fileURLToPath(new URL('../bin/receipts.mjs', import.meta.url)).r
 /** Translate a verification result without changing it or manufacturing a receipt. */
 export function hookResponse(vendor, input, verification) {
   if (!vendors.has(vendor)) throw new Error(`Unsupported hook vendor: ${vendor}`);
-  if (vendor === 'cursor' && input.status !== 'completed') return {};
-  if (verification.ok === true) return {};
+  if (vendor === 'cursor' && ['aborted', 'error'].includes(input.status)) return {};
   if (verification.configured === false) {
     const message = 'DoneLatch: NOT CONFIGURED for this project. No receipt was checked or accepted. '
       + 'Initialize receipts.yml if you want acceptance evidence here.';
     return vendor === 'cursor' ? {} : { systemMessage: message };
   }
+
+  if (verification.trustValidated !== true) {
+    const reason = 'DoneLatch: UNVERIFIED. Check configuration changed or is not approved; '
+      + 'a human must run `donelatch trust` in this project. '
+      + 'Do not run project checks or approve configuration from the agent. No completion has been accepted.';
+    // Unlike ordinary stale-receipt correction, a trust refusal never instructs
+    // execution and never becomes an allow because stop_hook_active is true.
+    return vendor === 'cursor' ? { followup_message: reason }
+      : { decision: vendor === 'gemini' ? 'deny' : 'block', reason };
+  }
+  if (verification.ok === true) return {};
 
   const details = Array.isArray(verification.reasons)
     ? verification.reasons.filter((value) => typeof value === 'string').join('; ').slice(0, 1400)
@@ -42,7 +52,7 @@ async function exists(location) {
 }
 
 /** Find configuration upward without crossing the nearest repository boundary. */
-export async function resolveProjectRoot(cwd, pinnedRoot) {
+export async function resolveProjectRoot(cwd, pinnedRoot, hasApproval = async () => false) {
   const start = pinnedRoot ?? cwd;
   if (typeof start !== 'string' || !path.isAbsolute(start)) {
     throw new Error('Host must provide an absolute project working directory.');
@@ -50,7 +60,21 @@ export async function resolveProjectRoot(cwd, pinnedRoot) {
   let root = path.resolve(start);
   for (let depth = 0; depth < 64; depth += 1) {
     if (await exists(path.join(root, 'receipts.yml'))) return { root, configured: true };
-    if (pinnedRoot !== undefined || await exists(path.join(root, '.git'))) {
+    if (await hasApproval(root, { ancestorOnly: depth > 0 })) return { root, configured: false, previouslyApproved: true };
+    if (pinnedRoot !== undefined) {
+      return { root, configured: false };
+    }
+    if (await exists(path.join(root, '.git'))) {
+      // Do not inherit another repository's checks, but also do not silently
+      // opt out of an approved ancestor merely because new Git metadata exists.
+      let ancestor = path.dirname(root);
+      for (let scan = 0; scan < 64; scan++) {
+        if (await hasApproval(ancestor, { ancestorOnly: true })) return { root, configured: false, previouslyApproved: true };
+        const parent = path.dirname(ancestor);
+        if (parent === ancestor) break;
+        ancestor = parent;
+        if (scan === 63) throw new Error('Approval ancestor discovery exceeded its limit; select the project explicitly.');
+      }
       return { root, configured: false };
     }
     const parent = path.dirname(root);
@@ -86,10 +110,11 @@ export async function runHook(vendor, dependencies = {}) {
   let verification;
   try {
     input = dependencies.input ?? await readInput(process.stdin);
-    if (vendor === 'cursor' && input.status !== 'completed') {
+    if (vendor === 'cursor' && ['aborted', 'error'].includes(input.status)) {
       output.write('{}\n');
       return;
     }
+    if (vendor === 'cursor' && input.status !== 'completed') throw new Error('Cursor stop status must be completed, aborted, or error.');
     let root = process.env.DONELATCH_PROJECT_ROOT || input.cwd || (vendor === 'cursor' && process.env.CURSOR_PROJECT_DIR)
       || (vendor === 'claude' && process.env.CLAUDE_PROJECT_DIR);
     if (!root && vendor === 'cursor' && Array.isArray(input.workspace_roots)) {
@@ -100,11 +125,15 @@ export async function runHook(vendor, dependencies = {}) {
       throw new Error('Host must provide an absolute project working directory.');
     }
     const resolveRoot = dependencies.resolveRoot ?? resolveProjectRoot;
-    const project = await resolveRoot(root, process.env.DONELATCH_PROJECT_ROOT);
-    if (project.configured === false) {
+    const bundle = dependencies.hasApproval && dependencies.verify ? null : await import('../bundle/verify.mjs');
+    const hasApproval = dependencies.hasApproval ?? bundle.hasConfigurationApproval;
+    const project = await resolveRoot(root, process.env.DONELATCH_PROJECT_ROOT, hasApproval);
+    if (project.previouslyApproved === true && project.configured === false) {
+      verification = { ok: false, trustRequired: true, trustValidated: false, reasons: ['Previously approved check configuration is missing.'] };
+    } else if (project.configured === false) {
       verification = { ok: false, configured: false, reasons: ['No receipts.yml in this project.'] };
     } else {
-      const verify = dependencies.verify ?? (await import('../bundle/verify.mjs')).verifyDone;
+      const verify = dependencies.verify ?? bundle.verifyDone;
       verification = await verify(project.root, { configPath: 'receipts.yml' });
     }
     if (!verification || typeof verification.ok !== 'boolean') {
@@ -117,6 +146,8 @@ export async function runHook(vendor, dependencies = {}) {
   const response = hookResponse(vendor, input, verification);
   if (verification.ok !== true) {
     const warning = response.systemMessage
+      ?? (verification.trustValidated !== true && verification.configured !== false
+        ? response.reason ?? response.followup_message : undefined)
       ?? (verification.configured === false
         ? 'DoneLatch: NOT CONFIGURED for this project. No receipt was checked or accepted.'
         : `DoneLatch: UNVERIFIED. ${(verification.reasons ?? []).join('; ')}`);

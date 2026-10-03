@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { hookResponse, runHook, resolveProjectRoot } from '../hooks/stop.mjs';
 import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
@@ -7,7 +7,15 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-const invalid = { ok: false, reasons: ['No receipt after last edit.'] };
+const previousTrustDir = process.env.DONELATCH_TRUST_DIR;
+const isolatedTrustDir = await mkdtemp(path.join(os.tmpdir(), 'donelatch-hooks-trust-'));
+process.env.DONELATCH_TRUST_DIR = isolatedTrustDir;
+after(async () => {
+  if (previousTrustDir === undefined) delete process.env.DONELATCH_TRUST_DIR;
+  else process.env.DONELATCH_TRUST_DIR = previousTrustDir;
+  await rm(isolatedTrustDir, { recursive: true, force: true });
+});
+const invalid = { ok: false, trustValidated: true, reasons: ['No receipt after last edit.'] };
 
 test('Gemini extension ships its context and native hook alongside the Claude hook', async () => {
   const manifest = JSON.parse(await readFile(new URL('../gemini-extension.json', import.meta.url), 'utf8'));
@@ -23,7 +31,7 @@ test('Gemini extension ships its context and native hook alongside the Claude ho
 
 for (const vendor of ['claude', 'codex', 'gemini', 'cursor']) {
   test(`${vendor}: accepts only the verifier's true result`, () => {
-    assert.deepEqual(hookResponse(vendor, { status: 'completed' }, { ok: true }), {});
+    assert.deepEqual(hookResponse(vendor, { status: 'completed' }, { ok: true, trustValidated: true }), {});
     const output = hookResponse(vendor, { status: 'completed' }, invalid);
     assert.equal(output.decision ?? Boolean(output.followup_message),
       vendor === 'cursor' ? true : vendor === 'gemini' ? 'deny' : 'block');
@@ -56,7 +64,8 @@ test('a verifier failure emits one JSON decision and a stderr warning', async ()
   });
   const result = JSON.parse(stdout);
   assert.equal(result.decision, 'block');
-  assert.match(result.reason, /Broken configuration/);
+  assert.match(result.reason, /a human must run `donelatch trust`/);
+  assert.doesNotMatch(result.reason, /faultcheck|receipts\.mjs/);
   assert.match(stderr, /UNVERIFIED/);
   assert.equal(stdout.trim().split('\n').length, 1);
 });
@@ -184,7 +193,9 @@ if (value !== 'ok') { console.error('ASSERT_LITERAL: wrong value'); process.exit
     faults: [{ id: 'wrong-value', file: 'value.mjs', find: '"ok"', replace: '"broken"', checkIds: ['literal'] }],
     exclude: []
   }));
-  const { runChecks, faultcheck, verifyDone } = await import('../bundle/core.mjs');
+  const { runChecks, faultcheck, verifyDone, inspectConfiguration, approveReviewedConfiguration } = await import('../bundle/core.mjs');
+  const review = await inspectConfiguration(root);
+  await approveReviewedConfiguration(root, { reviewedHash: review.configurationHash });
   assert.equal((await runChecks(root)).status, 'passed');
   assert.equal((await faultcheck(root)).status, 'passed');
   assert.equal((await verifyDone(root)).ok, true);

@@ -5,6 +5,8 @@ description: Produce fresh DoneLatch acceptance and fault-check receipts for a c
 
 Read the project's `receipts.yml` and preserve its user-approved checks, protected files, and mutation scope. A passing test alone is not an accepted outcome.
 
+Before any execution, ask the CLI's `verify-done` for current approval/evidence status. If it says the check configuration changed or is not approved, do not run checks, approve it, edit the outside-repo trust store, or invoke `trust`. Report that a human must review and run `donelatch trust` in the project. Human approval is required again after every acceptance-configuration change. Only an already approved configuration may proceed to execution.
+
 Locate this plugin's `bin/receipts.mjs` from the installed plugin root. Invoke it with Node in the target project: `node /path/to/donelatch/bin/receipts.mjs run`, then `faultcheck`, then `verify-done`. Quote paths that contain spaces. Run these after the last source or acceptance-configuration edit. Report the verifier's real result and the receipt path.
 
 Configured commands execute with the current user's permissions. Review unfamiliar check commands and their side effects before running them; preserve the user's authorization scope. Fault copies are not security sandboxes. Avoid destructive commands, live credentials, and external writes in fault checks.

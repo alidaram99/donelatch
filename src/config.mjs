@@ -1,6 +1,7 @@
 import path from 'node:path';
 import { readFile, lstat, realpath } from 'node:fs/promises';
 import { parseDocument } from 'yaml';
+import { createHash } from 'node:crypto';
 
 export const DEFAULT_EXCLUDES = ['.git', '.receipts', 'node_modules'];
 export const pathKey = value => process.platform === 'win32' ? value.toLowerCase() : value;
@@ -42,9 +43,10 @@ function keysOnly(object, allowed, label) {
   for (const key of Object.keys(object)) if (!allowed.includes(key)) fail(`Unknown ${label} field: ${key}`);
 }
 export async function loadConfig(root, configPath = 'receipts.yml') {
-  const configFile = await safePath(root, configPath);
-  const text = await readFile(configFile, 'utf8');
-  if (Buffer.byteLength(text) > 256_000) fail('Config exceeds 256 KB');
+  const configFile = await safePath(root, configPath, { ordinaryFile: true });
+  const bytes = await readFile(configFile);
+  if (bytes.length > 256_000) fail('Config exceeds 256 KB');
+  const text = bytes.toString('utf8');
   const document = parseDocument(text, { uniqueKeys: true, maxAliasCount: 0 });
   if (document.errors.length) fail(`Invalid YAML: ${document.errors[0].message}`);
   const config = document.toJS({ maxAliasCount: 0 });
@@ -80,5 +82,6 @@ export async function loadConfig(root, configPath = 'receipts.yml') {
   const excludes = [...new Set([...DEFAULT_EXCLUDES, ...config.exclude])];
   const matchesExclude = relative => excludes.some(p => pathKey(relative) === pathKey(p) || pathKey(relative).startsWith(`${pathKey(p)}/`));
   if (matchesExclude(relativePath(configPath)) || config.faults.some(f => matchesExclude(f.file))) fail('Acceptance config and fault targets must be inside the watched scope');
-  return { config, configPath: relativePath(configPath), excludes };
+  return { config, configPath: relativePath(configPath), excludes,
+    sourceHash: createHash('sha256').update(bytes).digest('hex') };
 }

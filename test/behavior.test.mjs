@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, mkdir, writeFile, readFile, rm, stat, utimes, rename, symlink, link } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -6,7 +6,16 @@ import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { verify as verifySignature, generateKeyPairSync } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { initProject, runChecks, faultcheck, verifyDone } from '../src/index.mjs';
+import { initProject, runChecks, faultcheck, verifyDone, inspectConfiguration, approveReviewedConfiguration } from '../src/index.mjs';
+
+const previousTrustDir = process.env.DONELATCH_TRUST_DIR;
+const isolatedTrustDir = await mkdtemp(join(tmpdir(), 'donelatch-behavior-trust-'));
+process.env.DONELATCH_TRUST_DIR = isolatedTrustDir;
+after(async () => {
+  if (previousTrustDir === undefined) delete process.env.DONELATCH_TRUST_DIR;
+  else process.env.DONELATCH_TRUST_DIR = previousTrustDir;
+  await rm(isolatedTrustDir, { recursive: true, force: true });
+});
 
 const productRoot = fileURLToPath(new URL('..', import.meta.url));
 const cli = join(productRoot, 'bin', 'receipts.mjs');
@@ -62,9 +71,13 @@ if (child.status !== 0) {
   return { root, config };
 }
 
-async function writeConfig(root, config) {
+async function writeConfig(root, config, { approve = true } = {}) {
   // JSON is a YAML 1.2 subset. This avoids testing a second handwritten YAML parser.
   await writeFile(join(root, 'receipts.yml'), JSON.stringify(config, null, 2));
+  if (approve) {
+    const review = await inspectConfiguration(root);
+    await approveReviewedConfiguration(root, { reviewedHash: review.configurationHash });
+  }
 }
 
 async function accept(root) {
@@ -180,7 +193,7 @@ test('changing acceptance commands or mutations invalidates the recorded evidenc
   const { root, config } = await fixture(t);
   await accept(root);
   config.faults[0].replace = '// new negative control';
-  await writeConfig(root, config);
+  await writeConfig(root, config, { approve: false });
   assert.equal((await verifyDone(root)).ok, false);
 });
 
@@ -321,7 +334,7 @@ test('mutation path traversal is rejected without changing the outside file', as
   config.faults[0].file = `../${outside.split(/[\\/]/).at(-1)}`;
   config.faults[0].find = 'original';
   config.faults[0].replace = 'tampered';
-  await writeConfig(root, config);
+  await writeConfig(root, config, { approve: false });
   await invalidResult(() => faultcheck(root));
   assert.equal(await readFile(outside, 'utf8'), 'original outside bytes');
 });
@@ -449,7 +462,7 @@ test('CLI reports acceptance and uses the gate-failure exit code after a source 
 test('empty checks and unknown CLI arguments fail closed', async (t) => {
   const { root, config } = await fixture(t);
   config.checks = [];
-  await writeConfig(root, config);
+  await writeConfig(root, config, { approve: false });
   await invalidResult(() => runChecks(root));
   for (const args of [['imaginary-command'], ['run', '--imaginary-option'], ['verify-done', '--root']]) {
     const result = spawnSync(process.execPath, [cli, ...args], { cwd: root, encoding: 'utf8' });
@@ -463,7 +476,7 @@ test('Windows path aliases cannot mutate receipt state or bypass an excluded dir
   const aliases = process.platform === 'win32' ? ['RECEIPTS.YML', '.RECEIPTS/log.jsonl'] : ['.RECEIPTS/log.jsonl'];
   for (const file of aliases) {
     config.faults[0] = { ...originalFault, file };
-    await writeConfig(root, config);
+    await writeConfig(root, config, { approve: false });
     await assert.rejects(() => faultcheck(root), /Fault may not target config, keys, git metadata or dependencies/);
   }
   if (process.platform === 'win32') {

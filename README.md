@@ -1,4 +1,4 @@
-DoneLatch refuses acceptance of a coding agent's "done" until fresh checks pass and detect a configured behavioral fault.
+DoneLatch refuses acceptance of a coding agent's "done" until human-approved check definitions produce fresh passing checks and detect a configured behavioral fault.
 
 # DoneLatch
 
@@ -6,7 +6,7 @@ DoneLatch refuses acceptance of a coding agent's "done" until fresh checks pass 
 
 DoneLatch is a free, MIT-licensed local CLI and completion-hook plugin for Claude Code, Codex, Gemini CLI, and Cursor. It binds acceptance results to the current watched files, Git commit, and check configuration, then uses a deliberate behavioral fault as a negative control. It leaves a locally signed receipt instead of trusting a narrative saying the work is done.
 
-[Website](https://alidaram99.github.io/donelatch/) · [Install for your agent](docs/AGENT-INSTALL.md) · [Verification record](docs/VERIFY.md) · [Security boundaries](SECURITY.md) · [v0.1.1](https://github.com/alidaram99/donelatch/releases/tag/v0.1.1)
+[Website](https://alidaram99.github.io/donelatch/) · [Install for your agent](docs/AGENT-INSTALL.md) · [Verification record](docs/VERIFY.md) · [Security boundaries](SECURITY.md) · [v0.1.2](https://github.com/alidaram99/donelatch/releases/tag/v0.1.2)
 
 ## Why check the checks?
 
@@ -23,11 +23,13 @@ Requires **Node.js 24+** and Git for GitHub-based `npx` installation. No API key
 In your target project:
 
 ```sh
-npx --yes github:alidaram99/donelatch#v0.1.1 init
+npx --yes github:alidaram99/donelatch#v0.1.2 init
 # Edit receipts.yml: use a trusted acceptance command and one meaningful fault.
-npx --yes github:alidaram99/donelatch#v0.1.1 run
-npx --yes github:alidaram99/donelatch#v0.1.1 faultcheck
-npx --yes github:alidaram99/donelatch#v0.1.1 verify-done
+# HUMAN ONLY: inspect the exact definitions and approve their displayed hash.
+npx --yes github:alidaram99/donelatch#v0.1.2 trust
+npx --yes github:alidaram99/donelatch#v0.1.2 run
+npx --yes github:alidaram99/donelatch#v0.1.2 faultcheck
+npx --yes github:alidaram99/donelatch#v0.1.2 verify-done
 ```
 
 `init` writes a template. It does not infer the right requirement or provide instant proof: you must replace the placeholder check and fault. The command aliases are `donelatch` and `receipts`. This release is distributed on GitHub; it is not a published npm-registry package.
@@ -35,7 +37,7 @@ npx --yes github:alidaram99/donelatch#v0.1.1 verify-done
 Try the complete example with no project setup:
 
 ```sh
-git clone --branch v0.1.1 --depth 1 https://github.com/alidaram99/donelatch.git
+git clone --branch v0.1.2 --depth 1 https://github.com/alidaram99/donelatch.git
 cd donelatch
 npm ci
 npm run demo
@@ -48,6 +50,23 @@ AFTER EDIT: earlier receipts are stale; DONE REFUSED.
 ```
 
 The example runs in a disposable copy. Fault injection does not edit your original source.
+The demo approves only its shipped fixtures in an isolated temporary trust store; it does not approve your project or alter your user approvals.
+
+## Who approves check commands?
+
+A human runs `donelatch trust` in an interactive terminal after configuring the project. It shows each executable, every argument, working directory, inherited-environment behavior, timeouts, failure assertions, faults and exclusions. Type the complete displayed `APPROVE <SHA256>` phrase to approve that exact configuration. No checks execute during this review, and piped input, `--yes` and JSON approval are not supported.
+
+Approvals are stored outside the repository in a per-project file:
+
+| OS | Default trust directory |
+| --- | --- |
+| Windows | `%APPDATA%/DoneLatch/trust` |
+| macOS | `~/Library/Application Support/DoneLatch/trust` |
+| Linux | `${XDG_CONFIG_HOME:-~/.config}/donelatch/trust` |
+
+Any change to `receipts.yml`, including commands, arguments, faults, exclusions or file formatting, requires a new human review. `run`, `faultcheck` and `verify-done` reject an unapproved configuration. Hooks return a human-only refusal with **no instruction to execute project checks**; an ordinary retry flag does not clear that refusal. Deleting a previously approved configuration also refuses acceptance. See [the approval guide](docs/TRUST.md).
+
+This pins definitions, **not referenced script contents, executable/PATH resolution or inherited environment**. Keep those under appropriate permissions and review their side effects. The same OS user can rewrite the store/verifier or automate a terminal; an outside-repo store and interactive prompt are cooperative safeguards, not human authentication or adversarial isolation. Pin `DONELATCH_PROJECT_ROOT` to a reviewed absolute root when project selection matters.
 
 ## Define an outcome contract
 
@@ -80,11 +99,12 @@ Check commands are executable-plus-argument arrays, run without an implicit shel
 | Command | Behavior |
 | --- | --- |
 | `init` | Writes `receipts.yml`; refuses to overwrite it. Does not run checks. |
+| `trust` | Human-only interactive review; records the current configuration hash in the user trust directory without running checks. |
 | `run` | Executes all configured checks and records their actual results. Refuses passing evidence if watched inputs change during execution. |
 | `faultcheck` | Makes independent temporary copies, confirms a healthy baseline, injects each configured fault, then requires an expected assertion failure. |
 | `verify-done` | Reads evidence without running project commands. Requires the latest run and latest faultcheck to pass for the same current state. |
 
-All commands support `--root PATH`, `--config PATH`, and `--json`. Exit `0` means that command succeeded; only `verify-done` exit `0` means current completion evidence is accepted. Exit `1` means refused/failed/weak/stale; exit `2` means invalid setup or inconclusive execution. The status is included in JSON. A source parser error, missing executable, timeout, or truncated output does not count as useful fault detection. Ambiguous failures are rejected conservatively.
+All commands support `--root PATH` and `--config PATH`. `--json` is supported except for interactive `trust`. Exit `0` means that command succeeded; only `verify-done` exit `0` means current completion evidence is accepted. Exit `1` means refused/failed/weak/stale; exit `2` means invalid setup or inconclusive execution. The status is included in JSON. A source parser error, missing executable, timeout, or truncated output does not count as useful fault detection. Ambiguous failures are rejected conservatively.
 
 The healthy temporary baseline must pass **without the failure marker**. A nonzero mutant must produce the declared marker and allowed assertion exit code. Merely making any command fail does not establish sensitivity to the intended outcome.
 
@@ -110,7 +130,7 @@ claude plugin install donelatch@donelatch-marketplace
 Codex marketplace discovery:
 
 ```sh
-codex plugin marketplace add alidaram99/donelatch --ref v0.1.1
+codex plugin marketplace add alidaram99/donelatch --ref v0.1.2
 ```
 
 Then install in the supported Plugins Directory and inspect/trust the hook in `/hooks`. Adding a marketplace does not install or trust the plugin.
@@ -118,14 +138,14 @@ Then install in the supported Plugins Directory and inspect/trust the hook in `/
 Gemini CLI extension installation:
 
 ```sh
-gemini extensions install https://github.com/alidaram99/donelatch --ref v0.1.1
+gemini extensions install https://github.com/alidaram99/donelatch --ref v0.1.2
 ```
 
 The extension bundles the CLI, acceptance-receipt skill, context and bounded `AfterAgent` hook. The repository satisfies the documented gallery discovery prerequisites; it is not a claim of current gallery inclusion. Cursor `stop` and manual Gemini installation can still use the reviewed local adapter. All four exact configurations and primary-source references are in [agent installation](docs/AGENT-INSTALL.md).
 
 The release includes self-contained CLI and verifier bundles. A cloned plugin cache can run them with Node alone, without npm installation or a network call at every stop.
 
-**Hooks are cooperative guardrails.** Claude/Codex can request a continuation, Gemini can retry, and Cursor can request a follow-up. DoneLatch requests at most one corrective turn, then visibly reports UNVERIFIED. A host can still stop an unverified turn; that does not make `verify-done` pass. Hooks may be disabled, skipped, untrusted, or fail open. Use the CLI exit code in a separately controlled release or CI acceptance step when acceptance must be enforced.
+**Hooks are cooperative guardrails.** Claude/Codex can request a continuation, Gemini can retry, and Cursor can request a follow-up. DoneLatch caps ordinary evidence correction at one turn, then visibly reports UNVERIFIED. Trust refusals stay human-only on every invocation; host limits can still end the turn. A host can still stop an unverified turn; that does not make `verify-done` pass. Hooks may be disabled, skipped, untrusted, or fail open. Use the CLI exit code in a separately controlled release or CI acceptance step when acceptance must be enforced.
 
 This is a standalone project. It does not change Orcheri or any agent's global configuration during installation of this source repository.
 
@@ -142,7 +162,7 @@ This is a standalone project. It does not change Orcheri or any agent's global c
 
 ### How do I stop Claude Code or Codex from saying it is done without tests?
 
-Install the Stop adapter, configure a real acceptance assertion plus fault, and inspect the resulting receipts. The hook requests correction; only a separately controlled `verify-done` acceptance step can reject the outcome reliably. An agent reaching its retry cap remains unverified.
+Install the Stop adapter, configure a real acceptance assertion plus fault, have a human run `donelatch trust`, and inspect the resulting receipts. The hook requests correction; only a separately controlled `verify-done` acceptance step can reject the outcome reliably. An agent reaching its retry cap remains unverified.
 
 ### Can passing tests still miss a real bug?
 
@@ -158,7 +178,7 @@ It is a deterministic local completion-evidence tool. It does not require an LLM
 
 ### Does DoneLatch upload my repository or charge per check?
 
-No. Version 0.1.1 is local, free, and has no telemetry or hosted service. Your own configured commands may use the network. Optional hosted analysis is a documented future plan, not an available paid product.
+No. Version 0.1.2 is local, free, and has no telemetry or hosted service. Your own configured commands may use the network. Optional hosted analysis is a documented future plan, not an available paid product.
 
 ### Does this verify every user requirement or prevent malicious agents?
 

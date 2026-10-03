@@ -7,7 +7,7 @@ DoneLatch asks a coding agent to provide current acceptance and fault-check rece
 Use Node.js 24 or newer. Clone a trusted release outside the project you want to verify:
 
 ```sh
-git clone --branch v0.1.1 --depth 1 https://github.com/alidaram99/donelatch.git
+git clone --branch v0.1.2 --depth 1 https://github.com/alidaram99/donelatch.git
 cd donelatch
 ```
 
@@ -18,16 +18,20 @@ In the target project, initialize and review the configuration before executing 
 ```sh
 node "/absolute/path/to/donelatch/bin/receipts.mjs" init
 # Review receipts.yml and configure checks and narrowly scoped mutations.
+# HUMAN ONLY: approve the exact displayed definitions in your own terminal.
+node "/absolute/path/to/donelatch/bin/receipts.mjs" trust
 node "/absolute/path/to/donelatch/bin/receipts.mjs" run
 node "/absolute/path/to/donelatch/bin/receipts.mjs" faultcheck
 node "/absolute/path/to/donelatch/bin/receipts.mjs" verify-done
 ```
 
-Paths with spaces must be quoted. Windows accepts forward slashes, for example `node "C:/Tools/DoneLatch/bin/receipts.mjs" run`. The command aliases are `receipts` and `donelatch` when installed as a CLI. `npx --yes github:alidaram99/donelatch verify-done` is also available; repeated hook calls should use a reviewed local checkout instead of downloading code at every stop.
+Paths with spaces must be quoted. Windows accepts forward slashes, for example `node "C:/Tools/DoneLatch/bin/receipts.mjs" run`. The command aliases are `receipts` and `donelatch` when installed as a CLI. `npx --yes github:alidaram99/donelatch#v0.1.2 verify-done` is also available; repeated hook calls should use a reviewed local checkout instead of downloading code at every stop.
 
 Merge the examples below into an existing agent configuration; preserve other hooks. These are installation instructions for the user's project. This repository does not change an Orcheri installation or its configuration.
 
-The adapter searches upward from the host project directory for `receipts.yml`, stopping at the closest `.git` file/directory. Set `DONELATCH_PROJECT_ROOT` to an absolute path to pin one project. A project without configuration receives a visible **NOT CONFIGURED** notice and no continuation; it has not been checked or accepted. An existing invalid configuration fails verification instead of being silently skipped.
+All configured projects require an outside-repo approval; see [human approval](TRUST.md). An unapproved/changed/deleted policy receives a human-only refusal without instructions to run checks. Trust refusals persist across retry flags; host limits can still stop a turn. Truly unconfigured projects with no relevant approval remain opt-in skips. Pin `DONELATCH_PROJECT_ROOT` in a human-controlled launcher when stable selection matters.
+
+The adapter searches upward from the host project directory for `receipts.yml`, stopping at the closest `.git` file/directory. Set `DONELATCH_PROJECT_ROOT` to an absolute path to pin one project. A never-approved project without configuration receives a visible **NOT CONFIGURED** notice and no continuation; it has not been checked or accepted. An existing invalid configuration fails verification instead of being silently skipped.
 
 ## Claude Code
 
@@ -65,14 +69,14 @@ The bundled Stop hook uses exec-form Node arguments, so a Windows plugin-cache p
 }
 ```
 
-Stop receives `cwd` and `stop_hook_active`. A failing verifier returns `decision: "block"` with a correction reason; a passing verifier returns `{}`. DoneLatch requests at most one continuation, then shows an UNVERIFIED warning. Claude also has its own continuation cap. Source: [Claude Code hooks](https://code.claude.com/docs/en/hooks), [marketplace installation](https://code.claude.com/docs/en/plugin-marketplaces), [plugin manifest](https://code.claude.com/docs/en/plugins-reference).
+Stop receives `cwd` and `stop_hook_active`. A failing verifier returns `decision: "block"` with a correction reason; a passing verifier returns `{}`. For ordinary missing/stale evidence, DoneLatch requests at most one continuation, then shows an UNVERIFIED warning. Unapproved definitions always receive a human-only refusal. Claude also has its own continuation cap. Source: [Claude Code hooks](https://code.claude.com/docs/en/hooks), [marketplace installation](https://code.claude.com/docs/en/plugin-marketplaces), [plugin manifest](https://code.claude.com/docs/en/plugins-reference).
 
 ## Codex
 
 DoneLatch includes a portable root `plugin.json`, a compatibility `.codex-plugin/plugin.json`, a skill, and a Codex marketplace catalog. Add the marketplace:
 
 ```sh
-codex plugin marketplace add alidaram99/donelatch --ref v0.1.1
+codex plugin marketplace add alidaram99/donelatch --ref v0.1.2
 codex plugin marketplace list
 ```
 
@@ -96,14 +100,14 @@ For CLI-only setup, add the following to the target project's `.codex/hooks.json
 
 Use an absolute checkout path because Codex can start in a subdirectory. On Windows, substitute a quoted forward-slash path. The bundled plugin command resolves `PLUGIN_ROOT` inside Node instead of relying on shell environment-variable expansion.
 
-Codex Stop receives `cwd`, `turn_id`, and `stop_hook_active`; `decision: "block"` creates a continuation prompt rather than rejecting an already rendered answer. The adapter uses one continuation and then a visible UNVERIFIED warning. This is a native Stop hook, not an invented after-turn event. Sources: [official Codex hooks](https://developers.openai.com/codex/hooks), [plugin packaging and marketplace setup](https://developers.openai.com/plugins/build/plugins).
+Codex Stop receives `cwd`, `turn_id`, and `stop_hook_active`; `decision: "block"` creates a continuation prompt rather than rejecting an already rendered answer. For ordinary missing/stale evidence, the adapter uses one continuation and then a visible UNVERIFIED warning. Unapproved definitions always receive a human-only refusal. This is a native Stop hook, not an invented after-turn event. Sources: [official Codex hooks](https://developers.openai.com/codex/hooks), [plugin packaging and marketplace setup](https://developers.openai.com/plugins/build/plugins).
 
 ## Gemini CLI
 
 Install the tagged extension, review the hook permissions, then restart Gemini CLI:
 
 ```sh
-gemini extensions install https://github.com/alidaram99/donelatch --ref v0.1.1
+gemini extensions install https://github.com/alidaram99/donelatch --ref v0.1.2
 gemini extensions list
 ```
 
@@ -128,7 +132,7 @@ For manual project-only setup instead of extension installation, merge this into
 }
 ```
 
-AfterAgent supplies `cwd` and `stop_hook_active`. `decision: "deny"` with a reason retries the response. DoneLatch returns one JSON object on stdout and diagnostics on stderr. Its second failing invocation emits a visible UNVERIFIED warning without retrying. Gemini timeout values are milliseconds. Other nonzero hook exits are nonfatal warnings, so a broken or unavailable script can fail open. Inspect `/hooks panel` before relying on the integration. Sources: [Gemini hook reference](https://geminicli.com/docs/hooks/reference/), [hook debugging](https://geminicli.com/docs/hooks/best-practices/).
+AfterAgent supplies `cwd` and `stop_hook_active`. `decision: "deny"` with a reason retries the response. DoneLatch returns one JSON object on stdout and diagnostics on stderr. For ordinary evidence failures, its second invocation emits an UNVERIFIED warning without retrying. Unapproved definitions retain a human-only deny response; the host may independently impose limits. Gemini timeout values are milliseconds. Other nonzero hook exits are nonfatal warnings, so a broken or unavailable script can fail open. Inspect `/hooks panel` before relying on the integration. Sources: [Gemini hook reference](https://geminicli.com/docs/hooks/reference/), [hook debugging](https://geminicli.com/docs/hooks/best-practices/).
 
 ## Cursor
 
@@ -147,7 +151,7 @@ Merge this into the target project's `.cursor/hooks.json`:
 }
 ```
 
-Cursor stop supplies `status` and `loop_count`. Only a completed turn can receive DoneLatch's `followup_message`; aborted/error turns are left alone. Both the hook configuration and script cap continuation at one. A stop hook requests another user turn; it does not retract the agent's preceding claim or provide an unconditional completion veto. After the cap, the UNVERIFIED warning is on stderr in Cursor's Hooks output channel; stop has no supported user-message field.
+Cursor stop supplies `status` and `loop_count`. Only a completed turn can receive DoneLatch's `followup_message`; aborted/error turns are left alone. For ordinary evidence failures, both the hook configuration and script cap continuation at one. A trust refusal retains its human-only follow-up, but Cursor can suppress it at the host loop limit. A stop hook requests another user turn; it does not retract the agent's preceding claim or provide an unconditional completion veto. After the cap, the UNVERIFIED warning is on stderr in Cursor's Hooks output channel; stop has no supported user-message field.
 
 The adapter uses the host's `cwd` or `CURSOR_PROJECT_DIR`, or a single `workspace_roots` entry, then locates the nearest project configuration. It refuses an ambiguous/missing root rather than checking the plugin directory. `DONELATCH_PROJECT_ROOT` can explicitly select one project. Inspect Customize → Hooks and the Hooks output channel. Source: [Cursor hooks and stop semantics](https://cursor.com/docs/hooks).
 
@@ -165,7 +169,7 @@ The protocol tests cover vendor-specific retry decisions, a passing result, veri
 
 ## Acceptance boundaries
 
-Hooks can be disabled, skipped, timed out, untrusted, or bypassed. This adapter deliberately stops retrying after one correction turn; the host may then finish an UNVERIFIED turn. **Stopping is not acceptance.** No retry-cap branch creates a passing receipt, and `verify-done` continues to fail when evidence is missing.
+Hooks can be disabled, skipped, timed out, untrusted, or bypassed. For ordinary evidence failures this adapter deliberately stops retrying after one correction turn; the host may then finish an UNVERIFIED turn. **Stopping is not acceptance.** Trust failures never instruct project-command execution and never produce an allow through an ordinary retry flag. No retry-cap branch creates a passing receipt, and `verify-done` continues to fail when evidence is missing.
 
 Use a CI job, release script, or independent reviewer to execute `verify-done` and reject its nonzero exit. Protect the acceptance configuration and verifier separately from agent-editable files when adversarial enforcement matters. A signature records local key possession and detects changed receipt bytes; it is not independent review, a trustworthy wall clock, or a guarantee of all requirements.
 

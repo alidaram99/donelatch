@@ -6,13 +6,15 @@ import { projectRoot, safePath, loadConfig, inside, pathKey } from './config.mjs
 import { snapshot, digest } from './state.mjs';
 import { withLock, appendReceipt, readLog } from './log.mjs';
 import { executeChecks } from './process.mjs';
+import { assertTrustedConfiguration } from './trust.mjs';
+export { trustProject, inspectConfiguration, approveReviewedConfiguration, userTrustDirectory } from './trust.mjs';
 
 export async function initProject(root, options={}) {
   root=await projectRoot(root);
   const file=await safePath(root,options.configPath??'receipts.yml',{allowMissing:true});
   const config={version:1,checks:[{id:'acceptance',command:'node',args:['--test'],timeoutMs:30000,failureExitCodes:[1],failureMarker:'ASSERT_CONTRACT_FAILED'}],faults:[{id:'configured-fault',file:'src/example.js',find:'REPLACE_WITH_EXACT_ORIGINAL_CODE',replace:'REPLACE_WITH_FAULTY_CODE',checkIds:['acceptance']}],exclude:['runtime']};
   await writeFile(file,`# DoneLatch: configure a real outcome assertion and one unique literal mutation.\n# Commands run as your OS user; this file is executable policy, not untrusted data.\n${stringify(config)}`,{flag:'wx'});
-  return {ok:true,configPath:path.relative(root,file),message:'Configure the acceptance check and fault before running DoneLatch.'};
+  return {ok:true,configPath:path.relative(root,file),message:'Configure the acceptance check and fault, then have a human review them with donelatch trust before running checks.'};
 }
 function receiptData(kind, before, startedAt, extras={}) {
   return {kind,startedAt,finishedAt:new Date().toISOString(),subject:before,...extras};
@@ -21,6 +23,7 @@ export async function runChecks(root, options={}) {
   root=await projectRoot(root);
   return withLock(root,async()=>{
     const loaded=await loadConfig(root,options.configPath);
+    await assertTrustedConfiguration(root,loaded,options);
     const before=await snapshot(root,loaded);
     const startedAt=new Date().toISOString();
     const results=await executeChecks(loaded.config.checks,root);
@@ -58,6 +61,7 @@ export async function faultcheck(root,options={}) {
   root=await projectRoot(root);
   return withLock(root,async()=>{
     const loaded=await loadConfig(root,options.configPath);
+    await assertTrustedConfiguration(root,loaded,options);
     const before=await snapshot(root,loaded);
     const startedAt=new Date().toISOString();
     // Hosted Windows runners may expose TEMP through an 8.3 alias (RUNNER~1).
@@ -116,10 +120,13 @@ export async function faultcheck(root,options={}) {
 export async function verifyDone(root,options={}) {
   root=await projectRoot(root);
   const reasons=[];
+  let trustValidated=false;
   try {
-    const lock=await safePath(root,'.receipts/operation.lock',{allowMissing:true,ordinaryFile:true});
-    try { await lstat(lock); return {ok:false,reasons:['An acceptance operation is running; wait for its current evidence']}; } catch(error) { if(error.code!=='ENOENT') throw error; }
     const loaded=await loadConfig(root,options.configPath);
+    await assertTrustedConfiguration(root,loaded,options);
+    trustValidated=true;
+    const lock=await safePath(root,'.receipts/operation.lock',{allowMissing:true,ordinaryFile:true});
+    try { await lstat(lock); return {ok:false,trustValidated,reasons:['An acceptance operation is running; wait for its current evidence']}; } catch(error) { if(error.code!=='ENOENT') throw error; }
     const current=await snapshot(root,loaded);
     const {receipts}=await readLog(root);
     const run=receipts.filter(r=>r.kind==='run').at(-1);
@@ -133,6 +140,6 @@ export async function verifyDone(root,options={}) {
     }
     if(run&&(!Array.isArray(run.results)||run.results.length!==loaded.config.checks.length||loaded.config.checks.some(c=>run.results.filter(r=>r.id===c.id&&r.status==='passed').length!==1))) reasons.push('Acceptance result set is incomplete');
     if(fault&&(!Array.isArray(fault.mutations)||fault.mutations.length!==loaded.config.faults.length||loaded.config.faults.some(f=>fault.mutations.filter(m=>m.id===f.id&&m.status==='detected').length!==1))) reasons.push('Fault sensitivity is incomplete');
-    return {ok:reasons.length===0,reasons,stateHash:current.stateHash,runHash:run?.hash??null,faultHash:fault?.hash??null};
-  } catch(error) {return {ok:false,reasons:[`Cannot verify evidence: ${error.message}`]};}
+    return {ok:reasons.length===0,trustValidated,reasons,stateHash:current.stateHash,runHash:run?.hash??null,faultHash:fault?.hash??null};
+  } catch(error) {return {ok:false,trustValidated,trustRequired:!trustValidated,reasons:[`Cannot verify evidence: ${error.message}`]};}
 }

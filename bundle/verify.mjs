@@ -109,17 +109,17 @@ var require_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    function visit_(key, node, visitor, path3) {
-      const ctrl = callVisitor(key, node, visitor, path3);
+    function visit_(key, node, visitor, path4) {
+      const ctrl = callVisitor(key, node, visitor, path4);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path3, ctrl);
-        return visit_(key, ctrl, visitor, path3);
+        replaceNode(key, path4, ctrl);
+        return visit_(key, ctrl, visitor, path4);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path3 = Object.freeze(path3.concat(node));
+          path4 = Object.freeze(path4.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = visit_(i, node.items[i], visitor, path3);
+            const ci = visit_(i, node.items[i], visitor, path4);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -130,13 +130,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path3 = Object.freeze(path3.concat(node));
-          const ck = visit_("key", node.key, visitor, path3);
+          path4 = Object.freeze(path4.concat(node));
+          const ck = visit_("key", node.key, visitor, path4);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = visit_("value", node.value, visitor, path3);
+          const cv = visit_("value", node.value, visitor, path4);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -157,17 +157,17 @@ var require_visit = __commonJS({
     visitAsync.BREAK = BREAK;
     visitAsync.SKIP = SKIP;
     visitAsync.REMOVE = REMOVE;
-    async function visitAsync_(key, node, visitor, path3) {
-      const ctrl = await callVisitor(key, node, visitor, path3);
+    async function visitAsync_(key, node, visitor, path4) {
+      const ctrl = await callVisitor(key, node, visitor, path4);
       if (identity.isNode(ctrl) || identity.isPair(ctrl)) {
-        replaceNode(key, path3, ctrl);
-        return visitAsync_(key, ctrl, visitor, path3);
+        replaceNode(key, path4, ctrl);
+        return visitAsync_(key, ctrl, visitor, path4);
       }
       if (typeof ctrl !== "symbol") {
         if (identity.isCollection(node)) {
-          path3 = Object.freeze(path3.concat(node));
+          path4 = Object.freeze(path4.concat(node));
           for (let i = 0; i < node.items.length; ++i) {
-            const ci = await visitAsync_(i, node.items[i], visitor, path3);
+            const ci = await visitAsync_(i, node.items[i], visitor, path4);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -178,13 +178,13 @@ var require_visit = __commonJS({
             }
           }
         } else if (identity.isPair(node)) {
-          path3 = Object.freeze(path3.concat(node));
-          const ck = await visitAsync_("key", node.key, visitor, path3);
+          path4 = Object.freeze(path4.concat(node));
+          const ck = await visitAsync_("key", node.key, visitor, path4);
           if (ck === BREAK)
             return BREAK;
           else if (ck === REMOVE)
             node.key = null;
-          const cv = await visitAsync_("value", node.value, visitor, path3);
+          const cv = await visitAsync_("value", node.value, visitor, path4);
           if (cv === BREAK)
             return BREAK;
           else if (cv === REMOVE)
@@ -211,23 +211,23 @@ var require_visit = __commonJS({
       }
       return visitor;
     }
-    function callVisitor(key, node, visitor, path3) {
+    function callVisitor(key, node, visitor, path4) {
       if (typeof visitor === "function")
-        return visitor(key, node, path3);
+        return visitor(key, node, path4);
       if (identity.isMap(node))
-        return visitor.Map?.(key, node, path3);
+        return visitor.Map?.(key, node, path4);
       if (identity.isSeq(node))
-        return visitor.Seq?.(key, node, path3);
+        return visitor.Seq?.(key, node, path4);
       if (identity.isPair(node))
-        return visitor.Pair?.(key, node, path3);
+        return visitor.Pair?.(key, node, path4);
       if (identity.isScalar(node))
-        return visitor.Scalar?.(key, node, path3);
+        return visitor.Scalar?.(key, node, path4);
       if (identity.isAlias(node))
-        return visitor.Alias?.(key, node, path3);
+        return visitor.Alias?.(key, node, path4);
       return void 0;
     }
-    function replaceNode(key, path3, node) {
-      const parent = path3[path3.length - 1];
+    function replaceNode(key, path4, node) {
+      const parent = path4[path4.length - 1];
       if (identity.isCollection(parent)) {
         parent.items[key] = node;
       } else if (identity.isPair(parent)) {
@@ -839,10 +839,10 @@ var require_Collection = __commonJS({
     var createNode = require_createNode();
     var identity = require_identity();
     var Node = require_Node();
-    function collectionFromPath(schema, path3, value) {
+    function collectionFromPath(schema, path4, value) {
       let v = value;
-      for (let i = path3.length - 1; i >= 0; --i) {
-        const k = path3[i];
+      for (let i = path4.length - 1; i >= 0; --i) {
+        const k = path4[i];
         if (typeof k === "number" && Number.isInteger(k) && k >= 0) {
           const a = [];
           a[k] = v;
@@ -861,7 +861,7 @@ var require_Collection = __commonJS({
         sourceObjects: /* @__PURE__ */ new Map()
       });
     }
-    var isEmptyPath = (path3) => path3 == null || typeof path3 === "object" && !!path3[Symbol.iterator]().next().done;
+    var isEmptyPath = (path4) => path4 == null || typeof path4 === "object" && !!path4[Symbol.iterator]().next().done;
     var Collection = class extends Node.NodeBase {
       constructor(type, schema) {
         super(type);
@@ -891,11 +891,11 @@ var require_Collection = __commonJS({
        * be a Pair instance or a `{ key, value }` object, which may not have a key
        * that already exists in the map.
        */
-      addIn(path3, value) {
-        if (isEmptyPath(path3))
+      addIn(path4, value) {
+        if (isEmptyPath(path4))
           this.add(value);
         else {
-          const [key, ...rest] = path3;
+          const [key, ...rest] = path4;
           const node = this.get(key, true);
           if (identity.isCollection(node))
             node.addIn(rest, value);
@@ -909,8 +909,8 @@ var require_Collection = __commonJS({
        * Removes a value from the collection.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path3) {
-        const [key, ...rest] = path3;
+      deleteIn(path4) {
+        const [key, ...rest] = path4;
         if (rest.length === 0)
           return this.delete(key);
         const node = this.get(key, true);
@@ -924,8 +924,8 @@ var require_Collection = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path3, keepScalar) {
-        const [key, ...rest] = path3;
+      getIn(path4, keepScalar) {
+        const [key, ...rest] = path4;
         const node = this.get(key, true);
         if (rest.length === 0)
           return !keepScalar && identity.isScalar(node) ? node.value : node;
@@ -943,8 +943,8 @@ var require_Collection = __commonJS({
       /**
        * Checks if the collection includes a value with the key `key`.
        */
-      hasIn(path3) {
-        const [key, ...rest] = path3;
+      hasIn(path4) {
+        const [key, ...rest] = path4;
         if (rest.length === 0)
           return this.has(key);
         const node = this.get(key, true);
@@ -954,8 +954,8 @@ var require_Collection = __commonJS({
        * Sets a value in this collection. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path3, value) {
-        const [key, ...rest] = path3;
+      setIn(path4, value) {
+        const [key, ...rest] = path4;
         if (rest.length === 0) {
           this.set(key, value);
         } else {
@@ -3470,9 +3470,9 @@ var require_Document = __commonJS({
           this.contents.add(value);
       }
       /** Adds a value to the document. */
-      addIn(path3, value) {
+      addIn(path4, value) {
         if (assertCollection(this.contents))
-          this.contents.addIn(path3, value);
+          this.contents.addIn(path4, value);
       }
       /**
        * Create a new `Alias` node, ensuring that the target `node` has the required anchor.
@@ -3547,14 +3547,14 @@ var require_Document = __commonJS({
        * Removes a value from the document.
        * @returns `true` if the item was found and removed.
        */
-      deleteIn(path3) {
-        if (Collection.isEmptyPath(path3)) {
+      deleteIn(path4) {
+        if (Collection.isEmptyPath(path4)) {
           if (this.contents == null)
             return false;
           this.contents = null;
           return true;
         }
-        return assertCollection(this.contents) ? this.contents.deleteIn(path3) : false;
+        return assertCollection(this.contents) ? this.contents.deleteIn(path4) : false;
       }
       /**
        * Returns item at `key`, or `undefined` if not found. By default unwraps
@@ -3569,10 +3569,10 @@ var require_Document = __commonJS({
        * scalar values from their surrounding node; to disable set `keepScalar` to
        * `true` (collections are always returned intact).
        */
-      getIn(path3, keepScalar) {
-        if (Collection.isEmptyPath(path3))
+      getIn(path4, keepScalar) {
+        if (Collection.isEmptyPath(path4))
           return !keepScalar && identity.isScalar(this.contents) ? this.contents.value : this.contents;
-        return identity.isCollection(this.contents) ? this.contents.getIn(path3, keepScalar) : void 0;
+        return identity.isCollection(this.contents) ? this.contents.getIn(path4, keepScalar) : void 0;
       }
       /**
        * Checks if the document includes a value with the key `key`.
@@ -3583,10 +3583,10 @@ var require_Document = __commonJS({
       /**
        * Checks if the document includes a value at `path`.
        */
-      hasIn(path3) {
-        if (Collection.isEmptyPath(path3))
+      hasIn(path4) {
+        if (Collection.isEmptyPath(path4))
           return this.contents !== void 0;
-        return identity.isCollection(this.contents) ? this.contents.hasIn(path3) : false;
+        return identity.isCollection(this.contents) ? this.contents.hasIn(path4) : false;
       }
       /**
        * Sets a value in this document. For `!!set`, `value` needs to be a
@@ -3603,13 +3603,13 @@ var require_Document = __commonJS({
        * Sets a value in this document. For `!!set`, `value` needs to be a
        * boolean to add/remove the item from the set.
        */
-      setIn(path3, value) {
-        if (Collection.isEmptyPath(path3)) {
+      setIn(path4, value) {
+        if (Collection.isEmptyPath(path4)) {
           this.contents = value;
         } else if (this.contents == null) {
-          this.contents = Collection.collectionFromPath(this.schema, Array.from(path3), value);
+          this.contents = Collection.collectionFromPath(this.schema, Array.from(path4), value);
         } else if (assertCollection(this.contents)) {
-          this.contents.setIn(path3, value);
+          this.contents.setIn(path4, value);
         }
       }
       /**
@@ -5570,9 +5570,9 @@ var require_cst_visit = __commonJS({
     visit.BREAK = BREAK;
     visit.SKIP = SKIP;
     visit.REMOVE = REMOVE;
-    visit.itemAtPath = (cst, path3) => {
+    visit.itemAtPath = (cst, path4) => {
       let item = cst;
-      for (const [field, index] of path3) {
+      for (const [field, index] of path4) {
         const tok = item?.[field];
         if (tok && "items" in tok) {
           item = tok.items[index];
@@ -5581,23 +5581,23 @@ var require_cst_visit = __commonJS({
       }
       return item;
     };
-    visit.parentCollection = (cst, path3) => {
-      const parent = visit.itemAtPath(cst, path3.slice(0, -1));
-      const field = path3[path3.length - 1][0];
+    visit.parentCollection = (cst, path4) => {
+      const parent = visit.itemAtPath(cst, path4.slice(0, -1));
+      const field = path4[path4.length - 1][0];
       const coll = parent?.[field];
       if (coll && "items" in coll)
         return coll;
       throw new Error("Parent collection not found");
     };
-    function _visit(path3, item, visitor) {
-      let ctrl = visitor(item, path3);
+    function _visit(path4, item, visitor) {
+      let ctrl = visitor(item, path4);
       if (typeof ctrl === "symbol")
         return ctrl;
       for (const field of ["key", "value"]) {
         const token = item[field];
         if (token && "items" in token) {
           for (let i = 0; i < token.items.length; ++i) {
-            const ci = _visit(Object.freeze(path3.concat([[field, i]])), token.items[i], visitor);
+            const ci = _visit(Object.freeze(path4.concat([[field, i]])), token.items[i], visitor);
             if (typeof ci === "number")
               i = ci - 1;
             else if (ci === BREAK)
@@ -5608,10 +5608,10 @@ var require_cst_visit = __commonJS({
             }
           }
           if (typeof ctrl === "function" && field === "key")
-            ctrl = ctrl(item, path3);
+            ctrl = ctrl(item, path4);
         }
       }
-      return typeof ctrl === "function" ? ctrl(item, path3) : ctrl;
+      return typeof ctrl === "function" ? ctrl(item, path4) : ctrl;
     }
     exports.visit = visit;
   }
@@ -7364,12 +7364,13 @@ var require_dist = __commonJS({
 
 // src/index.mjs
 var import_yaml2 = __toESM(require_dist(), 1);
-import { mkdir as mkdir2, writeFile as writeFile2, readFile as readFile4, lstat as lstat3, readdir as readdir2, copyFile, mkdtemp, rm, realpath as realpath2, chmod } from "node:fs/promises";
+import { mkdir as mkdir3, writeFile as writeFile3, readFile as readFile5, lstat as lstat4, readdir as readdir2, copyFile, mkdtemp, rm as rm2, realpath as realpath3, chmod } from "node:fs/promises";
 
 // src/config.mjs
 var import_yaml = __toESM(require_dist(), 1);
 import path from "node:path";
 import { readFile, lstat, realpath } from "node:fs/promises";
+import { createHash } from "node:crypto";
 var DEFAULT_EXCLUDES = [".git", ".receipts", "node_modules"];
 var pathKey = (value) => process.platform === "win32" ? value.toLowerCase() : value;
 function fail(message) {
@@ -7414,9 +7415,10 @@ function keysOnly(object, allowed, label) {
   for (const key of Object.keys(object)) if (!allowed.includes(key)) fail(`Unknown ${label} field: ${key}`);
 }
 async function loadConfig(root, configPath = "receipts.yml") {
-  const configFile = await safePath(root, configPath);
-  const text = await readFile(configFile, "utf8");
-  if (Buffer.byteLength(text) > 256e3) fail("Config exceeds 256 KB");
+  const configFile = await safePath(root, configPath, { ordinaryFile: true });
+  const bytes = await readFile(configFile);
+  if (bytes.length > 256e3) fail("Config exceeds 256 KB");
+  const text = bytes.toString("utf8");
   const document = (0, import_yaml.parseDocument)(text, { uniqueKeys: true, maxAliasCount: 0 });
   if (document.errors.length) fail(`Invalid YAML: ${document.errors[0].message}`);
   const config = document.toJS({ maxAliasCount: 0 });
@@ -7452,11 +7454,16 @@ async function loadConfig(root, configPath = "receipts.yml") {
   const excludes = [.../* @__PURE__ */ new Set([...DEFAULT_EXCLUDES, ...config.exclude])];
   const matchesExclude = (relative) => excludes.some((p) => pathKey(relative) === pathKey(p) || pathKey(relative).startsWith(`${pathKey(p)}/`));
   if (matchesExclude(relativePath(configPath)) || config.faults.some((f) => matchesExclude(f.file))) fail("Acceptance config and fault targets must be inside the watched scope");
-  return { config, configPath: relativePath(configPath), excludes };
+  return {
+    config,
+    configPath: relativePath(configPath),
+    excludes,
+    sourceHash: createHash("sha256").update(bytes).digest("hex")
+  };
 }
 
 // src/state.mjs
-import { createHash } from "node:crypto";
+import { createHash as createHash2 } from "node:crypto";
 import { readdir, lstat as lstat2, readFile as readFile2 } from "node:fs/promises";
 import path2 from "node:path";
 import { spawnSync } from "node:child_process";
@@ -7465,7 +7472,7 @@ function canonical(value) {
   if (value && typeof value === "object") return `{${Object.keys(value).sort().map((k) => `${JSON.stringify(k)}:${canonical(value[k])}`).join(",")}}`;
   return JSON.stringify(value);
 }
-var digest = (value) => createHash("sha256").update(typeof value === "string" || Buffer.isBuffer(value) ? value : canonical(value)).digest("hex");
+var digest = (value) => createHash2("sha256").update(typeof value === "string" || Buffer.isBuffer(value) ? value : canonical(value)).digest("hex");
 async function snapshot(root, loaded) {
   const files = [];
   let totalBytes = 0;
@@ -7555,19 +7562,141 @@ async function readLog(root, { create = false } = {}) {
   return { receipts, ...keyPair };
 }
 
+// src/trust.mjs
+import path3 from "node:path";
+import os from "node:os";
+import { lstat as lstat3, realpath as realpath2, mkdir as mkdir2, readFile as readFile4, writeFile as writeFile2, rename, rm } from "node:fs/promises";
+import { createInterface } from "node:readline/promises";
+var HUMAN_TRUST_REQUIRED = "Check configuration changed or is not approved; a human must run `donelatch trust` in this project. Do not run project checks or approve configuration from the agent.";
+var TrustError = class extends Error {
+  constructor(detail) {
+    super(`${HUMAN_TRUST_REQUIRED}${detail ? ` (${detail})` : ""}`);
+    this.name = "TrustError";
+  }
+};
+function userTrustDirectory({ platform = process.platform, env = process.env, home = os.homedir() } = {}) {
+  if (env.DONELATCH_TRUST_DIR) return env.DONELATCH_TRUST_DIR;
+  if (platform === "win32") return path3.join(env.APPDATA || path3.join(home, "AppData", "Roaming"), "DoneLatch", "trust");
+  if (platform === "darwin") return path3.join(home, "Library", "Application Support", "DoneLatch", "trust");
+  return path3.join(env.XDG_CONFIG_HOME || path3.join(home, ".config"), "donelatch", "trust");
+}
+async function repositoryBoundary(root) {
+  let current = root;
+  for (let depth = 0; depth < 64; depth++) {
+    try {
+      await lstat3(path3.join(current, ".git"));
+      return current;
+    } catch (error) {
+      if (error.code !== "ENOENT") throw error;
+    }
+    const parent = path3.dirname(current);
+    if (parent === current) return root;
+    current = parent;
+  }
+  throw new TrustError("Repository boundary is too deep to resolve safely");
+}
+async function safeDirectory(directory) {
+  if (typeof directory !== "string" || !path3.isAbsolute(directory)) {
+    throw new TrustError("Trust directory must be an absolute user-level path");
+  }
+  const absolute = path3.resolve(directory);
+  const base = path3.parse(absolute).root;
+  let current = base;
+  let existingAncestor = base;
+  const missingParts = [];
+  let missing = false;
+  for (const part of path3.relative(base, absolute).split(path3.sep).filter(Boolean)) {
+    current = path3.join(current, part);
+    if (!missing) {
+      let stat;
+      try {
+        stat = await lstat3(current);
+      } catch (error) {
+        if (error.code !== "ENOENT") throw error;
+        missing = true;
+      }
+      if (stat) {
+        if (stat.isSymbolicLink() || !stat.isDirectory()) throw new TrustError("Trust directory contains a link or non-directory");
+        existingAncestor = current;
+        continue;
+      }
+    }
+    missingParts.push(part);
+  }
+  return path3.join(await realpath2(existingAncestor), ...missingParts);
+}
+function configurationFingerprint(loaded) {
+  return digest({ version: 1, configPath: pathKey(loaded.configPath), sourceHash: loaded.sourceHash, definitions: loaded.config });
+}
+async function trustLocation(root, loaded, options = {}) {
+  const boundary = await repositoryBoundary(root);
+  const directory = await safeDirectory(options.trustDir ?? userTrustDirectory());
+  if (inside(boundary, directory)) throw new TrustError("Trust approvals must be outside the repository/project");
+  const projectId = digest({ projectRoot: pathKey(root), configPath: pathKey(loaded.configPath) });
+  return { directory, file: path3.join(directory, `${projectId}.json`), projectId };
+}
+async function approvalFileStat(file) {
+  let stat;
+  try {
+    stat = await lstat3(file);
+  } catch (error) {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  }
+  if (!stat.isFile() || stat.isSymbolicLink() || stat.nlink !== 1 || stat.size > 16384) {
+    throw new TrustError("Approval must be a small ordinary unlinked file");
+  }
+  return stat;
+}
+async function existingApproval(file) {
+  if (!await approvalFileStat(file)) return null;
+  let approval;
+  try {
+    approval = JSON.parse(await readFile4(file, "utf8"));
+  } catch {
+    throw new TrustError("Approval file is invalid");
+  }
+  if (!approval || Array.isArray(approval) || approval.version !== 1 || typeof approval.projectRoot !== "string" || typeof approval.configPath !== "string" || !/^[a-f0-9]{64}$/.test(approval.configurationHash ?? "")) {
+    throw new TrustError("Approval record is invalid");
+  }
+  return approval;
+}
+async function assertTrustedConfiguration(root, loaded, options = {}) {
+  const location = await trustLocation(root, loaded, options);
+  const approval = await existingApproval(location.file);
+  const configurationHash = configurationFingerprint(loaded);
+  if (!approval || pathKey(approval.projectRoot) !== pathKey(root) || pathKey(approval.configPath) !== pathKey(loaded.configPath) || approval.configurationHash !== configurationHash) {
+    throw new TrustError();
+  }
+  return { trusted: true, configurationHash, approvalFile: location.file };
+}
+async function hasConfigurationApproval(root, options = {}) {
+  if (options.ancestorOnly) {
+    const directory = await safeDirectory(options.trustDir ?? userTrustDirectory());
+    if (inside(path3.resolve(root), directory)) return false;
+  }
+  root = await projectRoot(root);
+  const configPath = relativePath(options.configPath ?? "receipts.yml");
+  const location = await trustLocation(root, { configPath }, options);
+  return Boolean(await approvalFileStat(location.file));
+}
+
 // src/index.mjs
 async function verifyDone(root, options = {}) {
   root = await projectRoot(root);
   const reasons = [];
+  let trustValidated = false;
   try {
+    const loaded = await loadConfig(root, options.configPath);
+    await assertTrustedConfiguration(root, loaded, options);
+    trustValidated = true;
     const lock = await safePath(root, ".receipts/operation.lock", { allowMissing: true, ordinaryFile: true });
     try {
-      await lstat3(lock);
-      return { ok: false, reasons: ["An acceptance operation is running; wait for its current evidence"] };
+      await lstat4(lock);
+      return { ok: false, trustValidated, reasons: ["An acceptance operation is running; wait for its current evidence"] };
     } catch (error) {
       if (error.code !== "ENOENT") throw error;
     }
-    const loaded = await loadConfig(root, options.configPath);
     const current = await snapshot(root, loaded);
     const { receipts } = await readLog(root);
     const run = receipts.filter((r) => r.kind === "run").at(-1);
@@ -7584,11 +7713,12 @@ async function verifyDone(root, options = {}) {
     }
     if (run && (!Array.isArray(run.results) || run.results.length !== loaded.config.checks.length || loaded.config.checks.some((c) => run.results.filter((r) => r.id === c.id && r.status === "passed").length !== 1))) reasons.push("Acceptance result set is incomplete");
     if (fault && (!Array.isArray(fault.mutations) || fault.mutations.length !== loaded.config.faults.length || loaded.config.faults.some((f) => fault.mutations.filter((m) => m.id === f.id && m.status === "detected").length !== 1))) reasons.push("Fault sensitivity is incomplete");
-    return { ok: reasons.length === 0, reasons, stateHash: current.stateHash, runHash: run?.hash ?? null, faultHash: fault?.hash ?? null };
+    return { ok: reasons.length === 0, trustValidated, reasons, stateHash: current.stateHash, runHash: run?.hash ?? null, faultHash: fault?.hash ?? null };
   } catch (error) {
-    return { ok: false, reasons: [`Cannot verify evidence: ${error.message}`] };
+    return { ok: false, trustValidated, trustRequired: !trustValidated, reasons: [`Cannot verify evidence: ${error.message}`] };
   }
 }
 export {
+  hasConfigurationApproval,
   verifyDone
 };
