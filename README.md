@@ -6,7 +6,7 @@ DoneLatch refuses acceptance of a coding agent's "done" until human-approved che
 
 DoneLatch is a free, MIT-licensed local CLI and completion-hook plugin for Claude Code, Codex, Gemini CLI, and Cursor. It binds acceptance results to the current watched files, Git commit, and check configuration, then uses a deliberate behavioral fault as a negative control. It leaves a locally signed receipt instead of trusting a narrative saying the work is done.
 
-[Website](https://alidaram99.github.io/donelatch/) · [Install for your agent](docs/AGENT-INSTALL.md) · [Verification record](docs/VERIFY.md) · [Security boundaries](SECURITY.md) · [v0.1.2](https://github.com/alidaram99/donelatch/releases/tag/v0.1.2)
+[Website](https://alidaram99.github.io/donelatch/) · [Install for your agent](docs/AGENT-INSTALL.md) · [v0.1.2 verification](docs/TRUST-VERIFY.md) · [Security boundaries](SECURITY.md) · [v0.1.2](https://github.com/alidaram99/donelatch/releases/tag/v0.1.2)
 
 ## Why check the checks?
 
