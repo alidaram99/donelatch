@@ -116,13 +116,17 @@ export async function assertTrustedConfiguration(root, loaded, options = {}) {
 // Presence, not valid content: deleting a once-approved policy must not turn a
 // guarded project into an opt-out. Corrupt/link-backed approvals fail closed.
 export async function hasConfigurationApproval(root, options = {}) {
+  let ancestorDirectory;
   if (options.ancestorOnly) {
-    const directory = await safeDirectory(options.trustDir ?? userTrustDirectory());
+    ancestorDirectory = await safeDirectory(options.trustDir ?? userTrustDirectory());
     // Such an ancestor could never have received a legitimate outside-project
     // approval. Do not confuse that absence with an unsafe selected project.
-    if (inside(path.resolve(root), directory)) return false;
+    if (inside(path.resolve(root), ancestorDirectory)) return false;
   }
   root = await projectRoot(root);
+  // The host can supply a Windows 8.3 alias. Canonicalize it before the
+  // containment check too, so RUNNER~1 does not become a false trust refusal.
+  if (options.ancestorOnly && inside(root, ancestorDirectory)) return false;
   const configPath = relativePath(options.configPath ?? 'receipts.yml');
   const location = await trustLocation(root, { configPath }, options);
   return Boolean(await approvalFileStat(location.file));

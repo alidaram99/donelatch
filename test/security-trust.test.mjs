@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import os from 'node:os';
-import { mkdtemp, mkdir, writeFile, readFile, rm, lstat, symlink, link } from 'node:fs/promises';
+import { mkdtemp, mkdir, writeFile, readFile, rm, lstat, symlink, link, realpath } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { PassThrough } from 'node:stream';
 import { fileURLToPath } from 'node:url';
-import { inspectConfiguration, approveReviewedConfiguration, trustProject, userTrustDirectory } from '../src/trust.mjs';
+import { inspectConfiguration, approveReviewedConfiguration, trustProject, userTrustDirectory, hasConfigurationApproval } from '../src/trust.mjs';
 import { runChecks, faultcheck, verifyDone } from '../src/index.mjs';
 import { hookResponse } from '../hooks/stop.mjs';
 
@@ -157,9 +157,26 @@ test('truly unconfigured non-Git projects remain opt-in skips even when ancestor
   await rm(path.join(f.root, 'receipts.yml'));
   const env = { ...process.env, DONELATCH_TRUST_DIR: f.trustDir };
   delete env.DONELATCH_PROJECT_ROOT;
-  for (const vendor of vendors) {
-    const result = spawnSync(process.execPath, [hook, vendor], { cwd: f.root, encoding: 'utf8', timeout: 30000, env,
-      input: JSON.stringify({ cwd: f.root, status: 'completed' }) });
+  const roots = [f.root];
+  if (process.platform === 'win32') {
+    // Ask cmd only for a short-path representation; no filesystem mutation is
+    // routed through a second shell. The command is constant and the fixture
+    // path is passed in a quoted environment expansion.
+    const short = spawnSync(process.env.ComSpec || 'cmd.exe',
+      ['/d', '/c', 'for %I in ("%DONELATCH_SHORT_PATH%") do @echo %~sI'], {
+        windowsVerbatimArguments: true, encoding: 'utf8', timeout: 30000,
+        env: { ...env, DONELATCH_SHORT_PATH: f.root } });
+    assert.equal(short.status, 0, short.stderr);
+    const alias = short.stdout.trim();
+    assert(path.isAbsolute(alias));
+    assert.equal((await realpath(alias)).toLowerCase(), (await realpath(f.root)).toLowerCase());
+    assert.equal(await hasConfigurationApproval(path.dirname(alias), { ...f.options, ancestorOnly: true }), false);
+    if (alias.toLowerCase() !== f.root.toLowerCase()) roots.push(alias);
+    else t.diagnostic('This Windows volume does not expose a distinct 8.3 alias; canonical discovery still checked.');
+  }
+  for (const root of roots) for (const vendor of vendors) {
+    const result = spawnSync(process.execPath, [hook, vendor], { cwd: root, encoding: 'utf8', timeout: 30000, env,
+      input: JSON.stringify({ cwd: root, status: 'completed' }) });
     assert.equal(result.status, 0, result.stderr);
     const response = JSON.parse(result.stdout);
     assert.equal(response.decision, undefined);

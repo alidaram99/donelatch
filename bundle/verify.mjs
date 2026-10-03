@@ -7671,11 +7671,13 @@ async function assertTrustedConfiguration(root, loaded, options = {}) {
   return { trusted: true, configurationHash, approvalFile: location.file };
 }
 async function hasConfigurationApproval(root, options = {}) {
+  let ancestorDirectory;
   if (options.ancestorOnly) {
-    const directory = await safeDirectory(options.trustDir ?? userTrustDirectory());
-    if (inside(path3.resolve(root), directory)) return false;
+    ancestorDirectory = await safeDirectory(options.trustDir ?? userTrustDirectory());
+    if (inside(path3.resolve(root), ancestorDirectory)) return false;
   }
   root = await projectRoot(root);
+  if (options.ancestorOnly && inside(root, ancestorDirectory)) return false;
   const configPath = relativePath(options.configPath ?? "receipts.yml");
   const location = await trustLocation(root, { configPath }, options);
   return Boolean(await approvalFileStat(location.file));
